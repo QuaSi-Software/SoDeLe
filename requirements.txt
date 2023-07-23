@@ -1,0 +1,7 @@
+pvlib==0.9.5
+numpy==1.24.3
+pandas==2.0.1
+openpyxl==3.1.2
+pyproj==3.5.0
+geopy==2.3.0
+xlsxwriter==3.0.1
