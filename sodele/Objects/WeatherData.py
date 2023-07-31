@@ -142,8 +142,8 @@ class WeatherData:
             "years": self.years,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "tz": self.tz,
-            "adjustTimestamp": self.adjustTimestamp,
+            "TZ": self.tz,
+            "adjustTimestamp": self.adjustTimeStamp,
             "recalculateDNI": self.recalculateDNI,
             "timeshiftInMinutes": self.timeshiftInMinutes,
             "weatherData": weatherDataResult
@@ -171,6 +171,6 @@ class WeatherData:
             "weatherData": optConstruct.getList(["timeStamps", "month", "day", "hour", "temp_air",
                                                  "atmospheric_pressure", "wind_direction", "wind_speed",
                                                  "sky_cover", "precipitable_water", "relative_humidity",
-                                                 "athmospheric_heat_irr", "dni", "ghi", "dhi"])
+                                                 "athmospheric_heat_irr", "dhi", "ghi", "dni"])
 
         }

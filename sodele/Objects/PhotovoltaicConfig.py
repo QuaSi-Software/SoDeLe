@@ -110,13 +110,13 @@ class PhotovoltaicConfig:
         :return:                        (ModuleDatabase, InverterDatabase)
         """
         if modulesDatabaseType == 1:
-            moduleDatabasePath = "./app/res/PV_Database/220225_Sandia_Modules.csv"
-            inverterDatabasePath = "./app/res/PV_Database/221115_CEC_Inverters.csv"
+            moduleDatabasePath = "./sodele/res/PV_Database/220225_Sandia_Modules.csv"
+            inverterDatabasePath = "./sodele/res/PV_Database/221115_CEC_Inverters.csv"
             return moduleDatabasePath, inverterDatabasePath
 
         elif modulesDatabaseType == 2:
-            moduleDatabasePath = "./app/res/PV_Database/221115_CEC_Modules.csv"
-            moduleDatabasePath = "./app/res/PV_Database/221115_CEC_Inverters.csv"
+            moduleDatabasePath = "./sodele/res/PV_Database/221115_CEC_Modules.csv"
+            moduleDatabasePath = "./sodele/res/PV_Database/221115_CEC_Inverters.csv"
             return moduleDatabasePath, moduleDatabasePath
 
         else:

@@ -1,10 +1,15 @@
 import json
+import sys
+import os
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from shapely.geometry import Point, Polygon
 
 import sodele
 from sodele import simulatePVPlants
+from sodele.Helper.dictor import dictor
 
 
 def readInTryData(latitude, longitude):
@@ -33,7 +38,46 @@ def readInTryData(latitude, longitude):
             break
 
     # read in the weather data
-    with open(f"./sodele/res/try/regions/TRY2035_{str(currentPolygonID).zfill(4)}_Jahr.dat", "r") as f:
+    df_weatherData = readInDatFile(f"./sodele/res/try/regions/TRY2035_{str(currentPolygonID).zfill(4)}_Jahr.dat")
+
+    # convert MM, DD, HH column to datetime with year = 2035
+    year = 2035
+    month = df_weatherData["MM"]
+    day = df_weatherData["DD"]
+    hour = df_weatherData["HH"]
+    df_weatherData["timeStamps"] = pd.to_datetime(dict(year=year, month=month, day=day, hour=hour))
+    df_weatherData["temp_air"] = df_weatherData["t"]
+    df_weatherData["relative_humidity"] = df_weatherData["RF"]
+    df_weatherData["wind_speed"] = df_weatherData["WG"]
+    df_weatherData["atmospheric_pressure"] = df_weatherData["p"]
+    df_weatherData["dhi"] = df_weatherData["B"]
+    df_weatherData["ghi"] = df_weatherData["dhi"] + df_weatherData["D"]
+
+    # TODO: theese values are not correct
+    rechtswert = 1
+    hochwert = 1
+    altitude = 1
+
+    weatherData = sodele.WeatherData(
+        rechtswert=rechtswert,
+        hochwert=hochwert,
+        altitude=altitude,
+        kind="try",
+        years=1,
+        latitude=latitude,
+        longitude=longitude,
+        tz=1,
+        adjustTimestamp=False,
+        recalculateDNI=False,
+        timeshiftInMinutes=0,
+        df_weatherData=df_weatherData)
+
+    return weatherData
+
+
+def readInDatFile(datFile):
+    # read in the weather data
+    with open(datFile, "r") as f:
         parsableData = ""
         for idx, line in enumerate(f.readlines()):
             if idx == 1:
@@ -61,52 +105,135 @@ def readInTryData(latitude, longitude):
                 data_dict[column].append(float(column_value))
 
     df_weatherData = pd.DataFrame.from_dict(data_dict)
-
-    # TODO: theese values are not correct
-    rechtswert = 1
-    hochwert = 1
-    altitude = 1
-
-    weatherData = sodele.WeatherData(
-        rechtswert=rechtswert,
-        hochwert=hochwert,
-        altitude=altitude,
-        kind="try",
-        years=1,
-        latitude=latitude,
-        longitude=longitude,
-        tz=1,
-        adjustTimestamp=False,
-        recalculateDNI=False,
-        timeshiftInMinutes=0,
-        df_weatherData=df_weatherData)
-
-    return weatherData
+    return df_weatherData
 
 
-def constructPVConfig():
-    """
-    Constructs the PV config.
-    :return:
-    """
-    return sodele.PhotovoltaicConfig()
+def readInEPWFile(epwFile):
+    raise NotImplementedError("This function is not implemented yet.")
 
 
-def constructPVPlants():
-    """
-    Constructs the PV plants.
-    :return:
-    """
-    return [sodele.PhotovoltaicPlant()]
+def readInWeatherDataFile(weatherDataFile):
+    weatherData = None
+    if weatherDataFile.endswith(".dat"):
+        df_weatherData = readInDatFile(weatherDataFile)
+    elif weatherDataFile.endswith(".epw"):
+        df_weatherData = readInEPWFile(weatherDataFile)
+    else:
+        raise ValueError(f"Could not read in the weather data file {weatherDataFile}.")
 
 
-def main():
-    weatherData = readInTryData(51.340199, 12.360103)
-    pvConfig = constructPVConfig()
-    pvPlants = constructPVPlants()
-    sodeleInput = sodele.SodeleInput(pvConfig, pvPlants, weatherData)
-    simulatePVPlants(sodeleInput)
+def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath):
+    # create indviaul plots for each plant
+    numberOfPlants = len(energyProfiles) - 1
+    maxEnergyValue = max([max(energyProfile) for energyProfile in energyProfiles[:numberOfPlants]])
+    maxAreaValue = max([max(energyAreaProfile) for energyAreaProfile in energyAreaProfiles[:numberOfPlants]])
+
+    def createSinglePlot(energyProfile, energyAreaProfile, name):
+        numberOfTimeSteps = len(energyProfile)
+        # create an x axis in hours and create a datetime object for each time step
+        x = [i for i in range(numberOfTimeSteps)]
+        x = pd.to_datetime(x, unit="h", origin="2020-01-01")
+
+        # create the plot
+        fig, ax = plt.subplots(figsize=(32, 8))
+        df_energyProfile = pd.DataFrame({"timeStamps": x,
+                                         "Energy Profile (kWh)": energyProfile,
+                                         "Energy Area Profile (kWh/m2)": energyAreaProfile
+                                         })
+        sns.lineplot(x="timeStamps", y="Energy Profile (kWh)", data=df_energyProfile, ax=ax, color="blue")
+        sns.lineplot(x="timeStamps", y="Energy Area Profile (kWh/m2)", data=df_energyProfile, ax=ax, color="red")
+        ax.set_ylim(0, maxEnergyValue * 1.1)
+        ax.set_xlim(x[0], x[-1])
+        ax.set_title(f"Energy Profile of Plant {plantNumber}")
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Energy (kWh)")
+        ax.legend(["Energy Profile (kWh)", "Energy Area Profile (kWh/m2)"])
+        plt.savefig(f"{resultPath}/{name}.png")
+        plt.close()
+
+    for plantNumber in range(numberOfPlants):
+        energyProfile = energyProfiles[plantNumber]
+        energyAreaProfile = energyAreaProfiles[plantNumber]
+        createSinglePlot(energyProfile, energyAreaProfile, f"energyProfile_{plantNumber}")
+
+    energyProfileSummary = energyProfiles[-1]
+    energyAreaProfileSummary = energyAreaProfiles[-1]
+    createSinglePlot(energyProfileSummary, energyAreaProfileSummary, "energyProfileSummary")
+
+    # create a plot for the summary of all plants
+    df_energyProfileSummary = pd.DataFrame(columns=["timeStamps", "Data", "PV Plant", "Is Area"])
+    for plantNumber in range(len(energyProfiles)):
+        name = f"Plant {plantNumber}: "
+        if plantNumber == len(energyProfiles) - 1:
+            name = "Summary of all Plants: "
+        numberOfTimeSteps = len(energyProfileSummary)
+        # create an x axis in hours and create a datetime object for each time step
+        x = [i for i in range(numberOfTimeSteps)]
+        x = pd.to_datetime(x, unit="h", origin="2020-01-01")
+        df_tmp = pd.DataFrame({"timeStamps": x,
+                               "Data": energyProfiles[plantNumber],
+                               "PV Plant": f"{name} Energy Profile",
+                               "Is Area": False})
+        df_energyProfileSummary = pd.concat([df_energyProfileSummary, df_tmp], axis=0)
+
+        df_tmp = pd.DataFrame({"timeStamps": x,
+                               "Data": energyAreaProfiles[plantNumber],
+                               "PV Plant": f"{name} Energy Area Profile",
+                               "Is Area": True})
+        df_energyProfileSummary = pd.concat([df_energyProfileSummary, df_tmp], axis=0)
+
+    fig, ax = plt.subplots(figsize=(32, 8))
+    sns.lineplot(x="timeStamps", y="Data", hue="PV Plant", data=df_energyProfileSummary, ax=ax)
+    ax.set_xlim(x[0], x[-1])
+    ax.set_title("Summary of all Energy Profiles")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Energy (kWh)")
+    plt.savefig(f"{resultPath}/energyProfileTotal.png")
+    plt.close()
+
+
+def main(inputJson: dict, filePath):
+    latitude = dictor(inputJson, "weatherData.latitude")
+    longitude = dictor(inputJson, "weatherData.longitude")
+    weatherDataFile = dictor(inputJson, "weatherData.filePath")
+    if weatherDataFile is not None:
+        weatherData = readInWeatherDataFile(weatherDataFile)
+    else:
+        weatherData = readInTryData(latitude, longitude)
+    inputJson["weatherData"] = weatherData.serialize()
+    sodeleInput = sodele.SodeleInput.deserialize(inputJson)
+    result = simulatePVPlants(sodeleInput)
+
+    energyProfiles = []
+    energyAreaProfiles = []
+
+    for pvResult in result["PhotovoltaicResults"]["PhotovoltaicPlants"]:
+        energyProfiles.append(pvResult["EnergyProfile"])
+        energyAreaProfiles.append(pvResult["EnergyAreaProfile"])
+
+    energyProfiles.append(result["PhotovoltaicResults"]["SummaryOfAllPlants"]["EnergyProfile"])
+    energyAreaProfiles.append(result["PhotovoltaicResults"]["SummaryOfAllPlants"]["EnergyAreaProfile"])
+
+    # remove the .json from the filePath
+    basePath = filePath[:-5]
+    resultPath = basePath + "_result"
+    # create folder for the results
+    if not os.path.exists(resultPath):
+        os.makedirs(resultPath)
+
+    # save the result
+    with open(resultPath + "/result.json", "w") as f:
+        json.dump(result, f, indent=4)
+
+    visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath)
 
 
 if __name__ == "__main__":
-    main()
+    # get the path to the input json from argv
+    # pathToInputJson = sys.argv[1]
+    pathToInputJson = "./docs/testInput.json"
+    if not os.path.exists(pathToInputJson):
+        raise FileNotFoundError(f"Could not find the input json at {pathToInputJson}")
+    with open(pathToInputJson, "r") as f:
+        inputJson = json.load(f)
+    main(inputJson, filePath=pathToInputJson)

@@ -8,6 +8,7 @@ from sodele.Helper import runsInDocker, getValueForKey, strToBool
 
 class BaseConfig:
     STACK_TRACE = True
+    KEEP_FILES = False
     DEBUG = True
 
 
