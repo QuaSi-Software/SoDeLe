@@ -2,6 +2,7 @@ import json
 import sys
 import os
 
+import pvlib
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -39,19 +40,6 @@ def readInTryData(latitude, longitude):
 
     # read in the weather data
     df_weatherData = readInDatFile(f"./sodele/res/try/regions/TRY2035_{str(currentPolygonID).zfill(4)}_Jahr.dat")
-
-    # convert MM, DD, HH column to datetime with year = 2035
-    year = 2035
-    month = df_weatherData["MM"]
-    day = df_weatherData["DD"]
-    hour = df_weatherData["HH"]
-    df_weatherData["timeStamps"] = pd.to_datetime(dict(year=year, month=month, day=day, hour=hour))
-    df_weatherData["temp_air"] = df_weatherData["t"]
-    df_weatherData["relative_humidity"] = df_weatherData["RF"]
-    df_weatherData["wind_speed"] = df_weatherData["WG"]
-    df_weatherData["atmospheric_pressure"] = df_weatherData["p"]
-    df_weatherData["dhi"] = df_weatherData["B"]
-    df_weatherData["ghi"] = df_weatherData["dhi"] + df_weatherData["D"]
 
     # TODO: theese values are not correct
     rechtswert = 1
@@ -105,19 +93,70 @@ def readInDatFile(datFile):
                 data_dict[column].append(float(column_value))
 
     df_weatherData = pd.DataFrame.from_dict(data_dict)
+    month = df_weatherData["MM"]
+    day = df_weatherData["DD"]
+    hour = df_weatherData["HH"]
+    df_weatherData["timeStamps"] = pd.to_datetime(dict(year=2035, month=month, day=day, hour=hour))
+    df_weatherData["temp_air"] = df_weatherData["t"]
+    df_weatherData["relative_humidity"] = df_weatherData["RF"]
+    df_weatherData["wind_speed"] = df_weatherData["WG"]
+    df_weatherData["atmospheric_pressure"] = df_weatherData["p"]
+    df_weatherData["dhi"] = df_weatherData["B"]
+    df_weatherData["ghi"] = df_weatherData["dhi"] + df_weatherData["D"]
+
     return df_weatherData
 
 
 def readInEPWFile(epwFile):
-    raise NotImplementedError("This function is not implemented yet.")
+    df_weather, metadata = pvlib.iotools.read_epw(epwFile)
+    year = df_weather["year"]
+    month = df_weather["month"]
+    day = df_weather["day"]
+    hour = df_weather["hour"]
+    df_weather["timeStamps"] = pd.to_datetime(dict(year=year, month=month, day=day, hour=hour))
+
+    rechtswert = 1
+    hochwert = 1
+
+    return sodele.WeatherData(
+        rechtswert=rechtswert,
+        hochwert=hochwert,
+        altitude=metadata["altitude"],
+        kind="epw",
+        years=1,
+        latitude=metadata["latitude"],
+        longitude=metadata["longitude"],
+        tz=metadata["TZ"],
+        adjustTimestamp=False,
+        recalculateDNI=False,
+        timeshiftInMinutes=0,
+        df_weatherData=df_weather)
 
 
-def readInWeatherDataFile(weatherDataFile):
-    weatherData = None
+def readInWeatherDataFile(weatherDataFile, latitude, longitude):
     if weatherDataFile.endswith(".dat"):
         df_weatherData = readInDatFile(weatherDataFile)
+
+        rechtswert = 1
+        hochwert = 1
+        altitude = 1
+
+        return sodele.WeatherData(
+            rechtswert=rechtswert,
+            hochwert=hochwert,
+            altitude=altitude,
+            kind="try",
+            years=1,
+            latitude=latitude,
+            longitude=longitude,
+            tz=1,
+            adjustTimestamp=False,
+            recalculateDNI=False,
+            timeshiftInMinutes=0,
+            df_weatherData=df_weatherData)
+
     elif weatherDataFile.endswith(".epw"):
-        df_weatherData = readInEPWFile(weatherDataFile)
+        return readInEPWFile(weatherDataFile)
     else:
         raise ValueError(f"Could not read in the weather data file {weatherDataFile}.")
 
@@ -195,9 +234,9 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath):
 def main(inputJson: dict, filePath):
     latitude = dictor(inputJson, "weatherData.latitude")
     longitude = dictor(inputJson, "weatherData.longitude")
-    weatherDataFile = dictor(inputJson, "weatherData.filePath")
+    weatherDataFile = dictor(inputJson, "weatherData.weatherDataFile")
     if weatherDataFile is not None:
-        weatherData = readInWeatherDataFile(weatherDataFile)
+        weatherData = readInWeatherDataFile(weatherDataFile, latitude, longitude)
     else:
         weatherData = readInTryData(latitude, longitude)
     inputJson["weatherData"] = weatherData.serialize()
