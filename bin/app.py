@@ -4,6 +4,7 @@ import pandas as pd
 from shapely.geometry import Point, Polygon
 
 import sodele
+from sodele import simulatePVPlants
 
 
 def readInTryData(latitude, longitude):
@@ -90,6 +91,7 @@ def constructPVConfig():
     """
     return sodele.PhotovoltaicConfig()
 
+
 def constructPVPlants():
     """
     Constructs the PV plants.
@@ -97,11 +99,13 @@ def constructPVPlants():
     """
     return [sodele.PhotovoltaicPlant()]
 
+
 def main():
     weatherData = readInTryData(51.340199, 12.360103)
     pvConfig = constructPVConfig()
     pvPlants = constructPVPlants()
     sodeleInput = sodele.SodeleInput(pvConfig, pvPlants, weatherData)
+    simulatePVPlants(sodeleInput)
 
 
 if __name__ == "__main__":
