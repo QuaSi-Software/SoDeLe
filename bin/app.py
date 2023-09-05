@@ -161,7 +161,7 @@ def readInWeatherDataFile(weatherDataFile, latitude, longitude):
         raise ValueError(f"Could not read in the weather data file {weatherDataFile}.")
 
 
-def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath):
+def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot=False):
     # create indviaul plots for each plant
     numberOfPlants = len(energyProfiles) - 1
     maxEnergyValue = max([max(energyProfile) for energyProfile in energyProfiles[:numberOfPlants]])
@@ -188,6 +188,8 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath):
         ax.set_ylabel("Energy (kWh)")
         ax.legend(["Energy Profile (kWh)", "Energy Area Profile (kWh/m2)"])
         plt.savefig(f"{resultPath}/{name}.png")
+        if showPlot:
+            plt.show()
         plt.close()
 
     for plantNumber in range(numberOfPlants):
@@ -228,6 +230,8 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath):
     ax.set_xlabel("Time")
     ax.set_ylabel("Energy (kWh)")
     plt.savefig(f"{resultPath}/energyProfileTotal.png")
+    if showPlot:
+        plt.show()
     plt.close()
 
 
@@ -264,7 +268,7 @@ def main(inputJson: dict, filePath):
     with open(resultPath + "/result.json", "w") as f:
         json.dump(result, f, indent=4)
 
-    visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath)
+    visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, sodeleInput.showPlots)
 
 
 if __name__ == "__main__":
