@@ -23,8 +23,8 @@ def CalcPVPowerProfile(sodeleInput, currentPVPlant):
     PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=sodeleInput.photovoltaicConfig.invertersDatabasePath)
 
     # set chosen module and inverter from database
-    current_module = PV_modules[sodeleInput.photovoltaicConfig.moduleName]
-    current_inverter = PV_inverters[sodeleInput.photovoltaicConfig.inverterName]
+    current_module = PV_modules[currentPVPlant.moduleName]
+    current_inverter = PV_inverters[currentPVPlant.inverterName]
 
     moduleInstallationSwitch = {
         1: 'open_rack_glass_glass',
@@ -55,12 +55,12 @@ def CalcPVPowerProfile(sodeleInput, currentPVPlant):
                                         strings_per_inverter=currentPVPlant.stringsPerInverter,
                                         losses_parameters={
                                             # ohmic losses in % for dc_ohmic_model with respect to STC
-                                            'dc_ohmic_percent': sodeleInput.photovoltaicConfig.lossesDCCables,
+                                            'dc_ohmic_percent': currentPVPlant.lossesDCCables,
                                             'soiling': 0,
                                             # losses in % for losses_model: watts
                                             'shading': 0,
                                             'snow': 0,
-                                            'mismatch': sodeleInput.photovoltaicConfig.lossesDCDatasheet,
+                                            'mismatch': currentPVPlant.lossesDCDatasheet,
                                             'wiring': 0,
                                             'connections': 0,
                                             'lid': 0,
@@ -93,7 +93,7 @@ def CalcPVPowerProfile(sodeleInput, currentPVPlant):
     albedo = pd.DataFrame(currentPVPlant.albedo * np.ones((df_weather["temp_air"].size, 1)), columns=['albedo'], index=df_weather["temp_air"].index)
 
     # create data frame with weather data including reduction factor as pvlib requests
-    losses_irradiation = sodeleInput.photovoltaicConfig.lossesIrradiation
+    losses_irradiation = currentPVPlant.lossesIrradiation
     weather_data = [(1 - losses_irradiation / 100) * df_weather['ghi'],
                     (1 - losses_irradiation / 100) * df_weather['dni'],
                     (1 - losses_irradiation / 100) * df_weather['dhi'],
@@ -111,18 +111,18 @@ def CalcPVPowerProfile(sodeleInput, currentPVPlant):
     n_modules = currentPVPlant.numberOfInverters * currentPVPlant.stringsPerInverter * currentPVPlant.modulesPerString  # [piece]
 
     # inverter dc to alternate current
-    if sodeleInput.photovoltaicConfig.useInverterDatabase:
+    if currentPVPlant.useInverterDatabase:
         # use inverter from sandia database
         Pv_power_profile = currentPVPlant.numberOfInverters * pvlib.inverter.sandia(mc.results.dc['v_mp'], mc.results.dc['p_mp'], current_inverter)  # [W]
     else:
         # use single eta for inverter
-        Pv_power_profile = currentPVPlant.numberOfInverters * mc.results.dc['p_mp'] * sodeleInput.photovoltaicConfig.inverterEta  # [W]
+        Pv_power_profile = currentPVPlant.numberOfInverters * mc.results.dc['p_mp'] * currentPVPlant.inverterEta  # [W]
 
     # fill nan values of power profile with zero
     Pv_power_profile = Pv_power_profile.fillna(0)
 
     # limit to lower bound = 0 if standby power should be ignored
-    if not sodeleInput.photovoltaicConfig.useStandByPowerInverter:
+    if not currentPVPlant.useStandByPowerInverter:
         Pv_power_profile[Pv_power_profile < 0] = 0
 
     # calculate rated power of all installed modules to get specific energy generation within simulated time horizon

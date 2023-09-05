@@ -1,14 +1,6 @@
 {
   "PhotovoltaicConfig": {
-    "modulesDatabaseType": 1,
-    "moduleName": "Aleo_S16_165__2007__E__",
-    "lossesIrradiation": 1.0,
-    "lossesDCDatasheet": 2.0,
-    "lossesDCCables": 0.0,
-    "useInverterDatabase": true,
-    "inverterName": "KACO__blueplanet_3601xi__240V_",
-    "useStandByPowerInverter": false,
-    "inverterEta": 0.92
+    "modulesDatabaseType": 1
   },
   "PhotovoltaicPlants": [
     {
@@ -18,7 +10,15 @@
       "stringsPerInverter": 2,
       "numberOfInverters": 2,
       "albedo": 0.2,
-      "moduleInstallation": 1
+      "moduleInstallation": 1,
+      "moduleName": "Aleo_S16_165__2007__E__",
+      "lossesIrradiation": 1.0,
+      "lossesDCDatasheet": 2.0,
+      "lossesDCCables": 0.0,
+      "useInverterDatabase": true,
+      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "useStandByPowerInverter": false,
+      "inverterEta": 0.92
     },
     {
       "surfaceAzimuth": 90,
@@ -27,7 +27,15 @@
       "stringsPerInverter": 2,
       "numberOfInverters": 2,
       "albedo": 0.2,
-      "moduleInstallation": 1
+      "moduleInstallation": 1,
+      "moduleName": "Aleo_S16_165__2007__E__",
+      "lossesIrradiation": 1.0,
+      "lossesDCDatasheet": 2.0,
+      "lossesDCCables": 0.0,
+      "useInverterDatabase": true,
+      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "useStandByPowerInverter": false,
+      "inverterEta": 0.92
     },
     {
       "surfaceAzimuth": 270,
@@ -36,7 +44,15 @@
       "stringsPerInverter": 2,
       "numberOfInverters": 2,
       "albedo": 0.2,
-      "moduleInstallation": 1
+      "moduleInstallation": 1,
+      "moduleName": "Aleo_S16_165__2007__E__",
+      "lossesIrradiation": 1.0,
+      "lossesDCDatasheet": 2.0,
+      "lossesDCCables": 0.0,
+      "useInverterDatabase": true,
+      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "useStandByPowerInverter": false,
+      "inverterEta": 0.92
     },
     {
       "surfaceAzimuth": 90,
@@ -45,7 +61,15 @@
       "stringsPerInverter": 2,
       "numberOfInverters": 2,
       "albedo": 0.2,
-      "moduleInstallation": 1
+      "moduleInstallation": 1,
+      "moduleName": "Aleo_S16_165__2007__E__",
+      "lossesIrradiation": 1.0,
+      "lossesDCDatasheet": 2.0,
+      "lossesDCCables": 0.0,
+      "useInverterDatabase": true,
+      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "useStandByPowerInverter": false,
+      "inverterEta": 0.92
     }
   ],
   "weatherData": {
