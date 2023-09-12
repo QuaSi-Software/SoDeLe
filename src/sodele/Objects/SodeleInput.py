@@ -33,7 +33,7 @@ class SodeleInput:
         """
         photovoltaicPlants = [PhotovoltaicPlant.deserialize(plant) for plant in json["PhotovoltaicPlants"]]
         weatherData = WeatherData.deserialize(json["weatherData"])
-        showPlots = dictor(json, "showPlots", False)
+        showPlots = dictor(json, "showPlots", True)
         return SodeleInput(photovoltaicPlants, showPlots, weatherData)
 
     def serialize(self):

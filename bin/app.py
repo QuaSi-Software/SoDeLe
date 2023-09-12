@@ -24,7 +24,7 @@ def readInTryData(latitude, longitude):
     :return:    The try data.
     :rtype:     sodele.WeatherData
     """
-    with open("./sodele/res/try/regionGeometry.json", "r") as f:
+    with open("./src/sodele/res/try/regionGeometry.json", "r") as f:
         regionGeometry = json.load(f)
 
     # check in which polygon the point is
@@ -39,7 +39,7 @@ def readInTryData(latitude, longitude):
             break
 
     # read in the weather data
-    df_weatherData = readInDatFile(f"./sodele/res/try/regions/TRY2035_{str(currentPolygonID).zfill(4)}_Jahr.dat")
+    df_weatherData = readInDatFile(f"./src/sodele/res/try/regions/TRY2035_{str(currentPolygonID).zfill(4)}_Jahr.dat")
 
     # TODO: theese values are not correct
     rechtswert = 1
@@ -162,6 +162,10 @@ def readInWeatherDataFile(weatherDataFile, latitude, longitude):
 
 
 def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot=False):
+    if True:
+        # use qt as backend
+        plt.switch_backend("QtAgg")
+
     # create indviaul plots for each plant
     numberOfPlants = len(energyProfiles) - 1
     maxEnergyValue = max([max(energyProfile) for energyProfile in energyProfiles[:numberOfPlants]])
@@ -188,9 +192,6 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot=F
         ax.set_ylabel("Energy (kWh)")
         ax.legend(["Energy Profile (kWh)", "Energy Area Profile (kWh/m2)"])
         plt.savefig(f"{resultPath}/{name}.png")
-        if showPlot:
-            plt.show()
-        plt.close()
 
     for plantNumber in range(numberOfPlants):
         energyProfile = energyProfiles[plantNumber]
@@ -230,9 +231,9 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot=F
     ax.set_xlabel("Time")
     ax.set_ylabel("Energy (kWh)")
     plt.savefig(f"{resultPath}/energyProfileTotal.png")
-    if showPlot:
+
+    if True:
         plt.show()
-    plt.close()
 
 
 def main(inputJson: dict, filePath):

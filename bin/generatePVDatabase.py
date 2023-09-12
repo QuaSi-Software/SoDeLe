@@ -37,8 +37,8 @@ def generatePvLibDatabase():
     df_pv_inverters.columns = [generateName(col, unit) for col, unit in zip(df_pv_inverters.columns, pv_inverters_units_per_column.split(";"))]
 
     # save the dataframes to csv
-    df_pv_modules.to_csv("./sodele/res/PV_Database/221115_CEC_Modules.csv", sep=";", index=False)
-    df_pv_inverters.to_csv("./sodele/res/PV_Database/221115_CEC_Inverters.csv", sep=";", index=False)
+    df_pv_modules.to_csv("./src/sodele/res/PV_Database/221115_CEC_Modules.csv", sep=";", index=False)
+    df_pv_inverters.to_csv("./src/sodele/res/PV_Database/221115_CEC_Inverters.csv", sep=";", index=False)
 
 
 if __name__ == "__main__":
