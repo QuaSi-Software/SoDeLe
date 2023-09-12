@@ -1,7 +1,4 @@
 {
-  "PhotovoltaicConfig": {
-    "modulesDatabaseType": 1
-  },
   "PhotovoltaicPlants": [
     {
       "surfaceAzimuth": 180,
@@ -11,12 +8,13 @@
       "numberOfInverters": 2,
       "albedo": 0.2,
       "moduleInstallation": 1,
-      "moduleName": "Aleo_S16_165__2007__E__",
+      "moduleName": "A10Green_Technology_A10J_S72_175",
       "lossesIrradiation": 1.0,
       "lossesDCDatasheet": 2.0,
       "lossesDCCables": 0.0,
+      "modulesDatabaseType": 2,
       "useInverterDatabase": true,
-      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "inverterName": "ABB__MICRO_0_25_I_OUTD_US_208__208V_",
       "useStandByPowerInverter": false,
       "inverterEta": 0.92
     },
@@ -28,12 +26,13 @@
       "numberOfInverters": 2,
       "albedo": 0.2,
       "moduleInstallation": 1,
-      "moduleName": "Aleo_S16_165__2007__E__",
+      "moduleName": "A10Green_Technology_A10J_S72_175",
       "lossesIrradiation": 1.0,
       "lossesDCDatasheet": 2.0,
       "lossesDCCables": 0.0,
+      "modulesDatabaseType": 2,
       "useInverterDatabase": true,
-      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "inverterName": "ABB__MICRO_0_25_I_OUTD_US_208__208V_",
       "useStandByPowerInverter": false,
       "inverterEta": 0.92
     },
@@ -45,12 +44,13 @@
       "numberOfInverters": 2,
       "albedo": 0.2,
       "moduleInstallation": 1,
-      "moduleName": "Aleo_S16_165__2007__E__",
+      "moduleName": "A10Green_Technology_A10J_S72_175",
       "lossesIrradiation": 1.0,
       "lossesDCDatasheet": 2.0,
       "lossesDCCables": 0.0,
+      "modulesDatabaseType": 2,
       "useInverterDatabase": true,
-      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "inverterName": "ABB__MICRO_0_25_I_OUTD_US_208__208V_",
       "useStandByPowerInverter": false,
       "inverterEta": 0.92
     },
@@ -62,12 +62,13 @@
       "numberOfInverters": 2,
       "albedo": 0.2,
       "moduleInstallation": 1,
-      "moduleName": "Aleo_S16_165__2007__E__",
+      "moduleName": "A10Green_Technology_A10J_S72_175",
       "lossesIrradiation": 1.0,
       "lossesDCDatasheet": 2.0,
       "lossesDCCables": 0.0,
+      "modulesDatabaseType": 2,
       "useInverterDatabase": true,
-      "inverterName": "KACO__blueplanet_3601xi__240V_",
+      "inverterName": "ABB__MICRO_0_25_I_OUTD_US_208__208V_",
       "useStandByPowerInverter": false,
       "inverterEta": 0.92
     }

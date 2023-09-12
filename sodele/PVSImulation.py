@@ -19,12 +19,7 @@ def CalcPVPowerProfile(sodeleInput, currentPVPlant):
     """
     # start calculation
     # load all available modules and inverters
-    PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=sodeleInput.photovoltaicConfig.modulesDatabasePath)
-    PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=sodeleInput.photovoltaicConfig.invertersDatabasePath)
-
-    # set chosen module and inverter from database
-    current_module = PV_modules[currentPVPlant.moduleName]
-    current_inverter = PV_inverters[currentPVPlant.inverterName]
+    current_module, current_inverter = currentPVPlant.getModulesAndInverters()
 
     moduleInstallationSwitch = {
         1: 'open_rack_glass_glass',
@@ -76,7 +71,7 @@ def CalcPVPowerProfile(sodeleInput, currentPVPlant):
         2: "cec",
     }
 
-    dc_model = dataBaseSwitch[sodeleInput.photovoltaicConfig.modulesDatabaseType]
+    dc_model = dataBaseSwitch[currentPVPlant.modulesDatabaseType]
 
     mc = pvlib.modelchain.ModelChain(system_mc, location,
                                      dc_model=dc_model,
@@ -126,11 +121,11 @@ def CalcPVPowerProfile(sodeleInput, currentPVPlant):
         Pv_power_profile[Pv_power_profile < 0] = 0
 
     # calculate rated power of all installed modules to get specific energy generation within simulated time horizon
-    if sodeleInput.photovoltaicConfig.modulesDatabaseType == 1:
+    if currentPVPlant.modulesDatabaseType == 1:
         # Sandia
         modules_power_rated = current_module.Impo * current_module.Vmpo * n_modules  # [W_peak]
         module_surfaceArea = current_module.Area * n_modules  # [m^2]
-    elif sodeleInput.photovoltaicConfig.modulesDatabaseType == 2:
+    elif currentPVPlant.modulesDatabaseType == 2:
         # CEC
         modules_power_rated = current_module.I_mp_ref * current_module.V_mp_ref * n_modules  # [W_peak]
         module_surfaceArea = current_module.A_c * n_modules  # [m^2]

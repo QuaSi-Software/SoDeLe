@@ -1,5 +1,7 @@
 import uuid
 
+import pvlib
+
 from sodele.Helper.dictor import dictor
 import sodele.Helper.optionsConcstructor as optConstruct
 
@@ -59,6 +61,14 @@ class PhotovoltaicPlant:
     :param lossesDCCables:              The losses due to the DC cables. in % (0-100)
     :type lossesDCCables:               float
 
+    :param modulesDatabaseType:         The type of the modules database.
+    :type modulesDatabaseType:          int
+
+    :param modulesDatabasePath:         The path to the modules database. Will be set automatically.
+    :type modulesDatabasePath:          str
+    :param inverterDatabasePath:        The path to the inverter database. Will be set automatically.
+    :type inverterDatabasePath:         str
+
     :param useInverterDatabase:         Flag to indicate if the inverter database should be used.
     :type useInverterDatabase:          bool
     :param inverterName:                The name of the inverter.
@@ -79,6 +89,7 @@ class PhotovoltaicPlant:
                  albedo: float, moduleInstallation: int,
                  moduleName: str,
                  lossesIrradiation: float, lossesDCDatasheet: float, lossesDCCables: float,
+                 modulesDatabaseType: int,
                  useInverterDatabase: bool, inverterName: str, useStandByPowerInverter: bool, inverterEta: float):
         self.uid = uid
         self.surfaceAzimuth = surfaceAzimuth
@@ -98,6 +109,11 @@ class PhotovoltaicPlant:
         self.lossesIrradiation = lossesIrradiation
         self.lossesDCDatasheet = lossesDCDatasheet
         self.lossesDCCables = lossesDCCables
+
+        self.modulesDatabaseType = modulesDatabaseType
+        dataBases = self.getDatabasePaths(modulesDatabaseType)
+        self.modulesDatabasePath = dataBases[0]
+        self.invertersDatabasePath = dataBases[1]
 
         self.useInverterDatabase = useInverterDatabase
         self.inverterName = inverterName
@@ -121,6 +137,7 @@ class PhotovoltaicPlant:
         numberOfInverters = dictor(json, "numberOfInverters", 0)
         albedo = dictor(json, "albedo", 0.2)
         moduleInstallation = dictor(json, "moduleInstallation", 1)
+        modulesDatabaseType = dictor(json, 'modulesDatabaseType', 2)
 
         try:
             moduleName = json['moduleName']
@@ -142,6 +159,7 @@ class PhotovoltaicPlant:
                                  albedo, moduleInstallation,
                                  moduleName,
                                  lossesIrradiation, lossesDCDatasheet, lossesDCCables,
+                                 modulesDatabaseType,
                                  useInverterDatabase, inverterName, useStandByPowerInverter, inverterEta)
 
     def serialize(self) -> dict:
@@ -162,6 +180,7 @@ class PhotovoltaicPlant:
             "lossesIrradiation": self.lossesIrradiation,
             "lossesDCDatasheet": self.lossesDCDatasheet,
             "lossesDCCables": self.lossesDCCables,
+            "modulesDatabaseType": self.modulesDatabaseType,
             "useInverterDatabase": self.useInverterDatabase,
             "inverterName": self.inverterName,
             "useStandByPowerInverter": self.useStandByPowerInverter,
@@ -187,11 +206,34 @@ class PhotovoltaicPlant:
             **optConstruct.getFloat("lossesIrradiation", "The losses due to irradiation. in % (0-100)", default=1.0),
             **optConstruct.getFloat("lossesDCDatasheet", "The losses due to the datasheet. in % (0-100)", default=2.0),
             **optConstruct.getFloat("lossesDCCables", "The losses due to the DC cables. in % (0-100)", default=0.0),
+            **optConstruct.getInteger("modulesDatabaseType", "", default=1),
             **optConstruct.getBoolean("useInverterDatabase", "Flag to indicate if the inverter database should be used.", default=False),
             **optConstruct.getString("inverterName", "The name of the inverter.", required=True, default=""),
             **optConstruct.getBoolean("useStandByPowerInverter", "Flag to indicate if the stand by power of the inverter should be used. Otherwise a constant value of 'inverterEta' is used.", default=False),
-            **optConstruct.getFloat("inverterEta", "The efficiency of the inverter. as factor (0-1)", default=0.92)
+            **optConstruct.getFloat("inverterEta", "The efficiency of the inverter. as factor (0-1)", default=0.92),
         }
+
+    @staticmethod
+    def getDatabasePaths(modulesDatabaseType: int):
+        """
+        Returns the database paths for the given modules database type.
+
+        :param modulesDatabaseType:     The type of the modules database. (1 = CEC, 2 = Sandia)
+        :type modulesDatabaseType:      int
+        :return:                        (ModuleDatabase, InverterDatabase)
+        """
+        if modulesDatabaseType == 1:
+            moduleDatabasePath = "./sodele/res/PV_Database/220225_Sandia_Modules.csv"
+            inverterDatabasePath = "./sodele/res/PV_Database/221115_CEC_Inverters.csv"
+            return moduleDatabasePath, inverterDatabasePath
+
+        elif modulesDatabaseType == 2:
+            moduleDatabasePath = "./sodele/res/PV_Database/221115_CEC_Modules.csv"
+            moduleDatabasePath = "./sodele/res/PV_Database/221115_CEC_Inverters.csv"
+            return moduleDatabasePath, moduleDatabasePath
+
+        else:
+            raise Exception(f"The given modules database type '{modulesDatabaseType}' is not supported.")
 
     def calculateProfileMetrics(self):
         """
@@ -208,4 +250,23 @@ class PhotovoltaicPlant:
         self.energyProfileArea = [energyProfileValue / self.surfaceArea for energyProfileValue in self.energyProfile]
         self.energyProfileAreaSum = self.energyProfileSum / self.surfaceArea
         self.energyKWPSum = self.energyProfileSum / self.systemKWP
+
+    def getModulesAndInverters(self):
+        # set chosen module and inverter from database
+        if self.modulesDatabaseType == 1:
+            PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=self.modulesDatabasePath)
+            PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
+
+            current_module = PV_modules[self.moduleName]
+            current_inverter = PV_inverters[self.inverterName]
+
+            return current_module, current_inverter
+        elif self.modulesDatabaseType == 2:
+            PV_modules = pvlib.pvsystem.retrieve_sam("cecmod")
+            PV_inverters = pvlib.pvsystem.retrieve_sam("cecinverter")
+
+            current_module = PV_modules[self.moduleName]
+            current_inverter = PV_inverters[self.inverterName]
+
+            return current_module, current_inverter
 
