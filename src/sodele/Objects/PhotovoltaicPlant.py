@@ -218,7 +218,7 @@ class PhotovoltaicPlant:
         """
         Returns the database paths for the given modules database type.
 
-        :param modulesDatabaseType:     The type of the modules database. (1 = CEC, 2 = Sandia)
+        :param modulesDatabaseType:     The type of the modules database. (1 = Sandia, 2 = CEC)
         :type modulesDatabaseType:      int
         :return:                        (ModuleDatabase, InverterDatabase)
         """
@@ -229,8 +229,8 @@ class PhotovoltaicPlant:
 
         elif modulesDatabaseType == 2:
             moduleDatabasePath = "./src/sodele/res/PV_Database/221115_CEC_Modules.csv"
-            moduleDatabasePath = "./src/sodele/res/PV_Database/221115_CEC_Inverters.csv"
-            return moduleDatabasePath, moduleDatabasePath
+            inverterDatabasePath = "./src/sodele/res/PV_Database/221115_CEC_Inverters.csv"
+            return moduleDatabasePath, inverterDatabasePath
 
         else:
             raise Exception(f"The given modules database type '{modulesDatabaseType}' is not supported.")
@@ -253,20 +253,11 @@ class PhotovoltaicPlant:
 
     def getModulesAndInverters(self):
         # set chosen module and inverter from database
-        if self.modulesDatabaseType == 1:
-            PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=self.modulesDatabasePath)
-            PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
+        PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=self.modulesDatabasePath)
+        PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
 
-            current_module = PV_modules[self.moduleName]
-            current_inverter = PV_inverters[self.inverterName]
+        current_module = PV_modules[self.moduleName]
+        current_inverter = PV_inverters[self.inverterName]
 
-            return current_module, current_inverter
-        elif self.modulesDatabaseType == 2:
-            PV_modules = pvlib.pvsystem.retrieve_sam("cecmod")
-            PV_inverters = pvlib.pvsystem.retrieve_sam("cecinverter")
-
-            current_module = PV_modules[self.moduleName]
-            current_inverter = PV_inverters[self.inverterName]
-
-            return current_module, current_inverter
+        return current_module, current_inverter
 
