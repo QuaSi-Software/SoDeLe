@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+import win32api
 
 import pvlib
 import pandas as pd
@@ -162,10 +163,6 @@ def readInWeatherDataFile(weatherDataFile, latitude, longitude):
 
 
 def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot=False):
-    if True:
-        # use qt as backend
-        plt.switch_backend("QtAgg")
-
     # create indviaul plots for each plant
     numberOfPlants = len(energyProfiles) - 1
     maxEnergyValue = max([max(energyProfile) for energyProfile in energyProfiles[:numberOfPlants]])
