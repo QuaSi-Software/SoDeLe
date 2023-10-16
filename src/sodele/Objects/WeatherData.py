@@ -10,10 +10,6 @@ class WeatherData:
     """
     This class is used to store weather data.
 
-    :param rechtswert:      the rechtswert
-    :type rechtswert:       int
-    :param hochwert:        the hochwert
-    :type hochwert:         int
     :param altitude:        the altitude
     :type altitude:         float
     :param kind:            the kind (e.g. 'mittleres Jahr')
@@ -37,7 +33,7 @@ class WeatherData:
     """
 
     def __init__(self,
-                 rechtswert: int, hochwert: int, altitude: float,
+                 altitude: float,
                  kind: str, years: int,
                  latitude: float, longitude: float,
                  tz: int,
@@ -46,8 +42,6 @@ class WeatherData:
         self.shouldAdjustTimestamp = adjustTimestamp
         self.shouldRecalculateDNI = recalculateDNI
         self.timeshiftInMinutes = timeshiftInMinutes
-        self.rechtwert = rechtswert
-        self.hochwert = hochwert
         self.altitude = altitude
         self.kind = kind
         self.years = years
@@ -66,8 +60,6 @@ class WeatherData:
         :type json: dict
         :return:
         """
-        rechtswert = json["rechtswert"]
-        hochwert = json["hochwert"]
         altitude = json["altitude"]
         kind = json["kind"]
         years = json["years"]
@@ -79,28 +71,27 @@ class WeatherData:
         timeshiftInMinutes = json["timeshiftInMinutes"]
 
         df_weatherData = pd.DataFrame.from_dict(json["weatherData"])
-        # set the column "timeStamps" as index
-        df_weatherData["timeStamps"] = pd.to_datetime(df_weatherData["timeStamps"])
-        df_weatherData.set_index("timeStamps", inplace=True)
-        return WeatherData(rechtswert, hochwert, altitude,
+        # set index
+        df_weatherData.index = pd.to_datetime(json["weatherData"]['index'])
+        return WeatherData(altitude,
                            kind, years,
                            latitude, longitude, tz,
                            adjustTimestamp, recalculateDNI, timeshiftInMinutes,
                            df_weatherData)
 
-    def adjustTimeStamp(self):
+    def adjustTimeStamp(self, timeshift):
         """
         Function to shift the time stamp of the weather dataframe by {timeshift} minutes
         The time period, freqency and the time zone will not be affected!
         """
 
-        newTimeIndex = self.df_weatherData.index + pd.Timedelta(minutes=self.timeshiftInMinutes)
+        newTimeIndex = self.df_weatherData.index + pd.Timedelta(minutes=timeshift)
         newStartTime = newTimeIndex[0]
 
         # set the new time index
         self.df_weatherData.index = newTimeIndex
 
-        logging().info(f"Time stamp of weather data was adjusted by {self.timeshiftInMinutes} minutes. New start time: {newStartTime}")
+        logging().info(f"Time stamp of weather data was adjusted by {timeshift} minutes. New start time: {newStartTime}")
 
     def recalculateDNI(self):
         """
@@ -111,16 +102,18 @@ class WeatherData:
         # see pvlib.solarposition.get_solarposition for further information
         solarPosition = pvlib.solarposition.get_solarposition(self.df_weatherData.index,
                                                               self.latitude, self.longitude, altitude=self.altitude,
-                                                              pressure=self.df_weatherData["atmospheric_pressure"],
+                                                              pressure=self.df_weatherData["atmospheric_pressure"],   # pressure in Pa!
                                                               method='nrel_numpy')
         # calculate direct normal iradiation using pvlib; fill nan values with zero nad replace -0.0 values with 0.0
-        dni = pvlib.irradiance.dni(self.df_weatherData["ghi"], self.df_weatherData["dhi"], solarPosition["zenith"])
+        dni = pvlib.irradiance.dni(self.df_weatherData["ghi"], self.df_weatherData["dhi"], solarPosition["zenith"])  # dhi is diffuse horizontal radiation!
         dni = dni.fillna(0.0)
         dni = np.nan_to_num(dni, nan=0.0)
         dni[dni == -0.0] = 0.0
 
         # replace the DNI column with the recalculated values
         self.df_weatherData["dni"] = dni
+
+        logging().info(f"The direct normal irradiation was (re)calculated.")
 
     def serialize(self):
         """
@@ -135,16 +128,14 @@ class WeatherData:
             weatherDataResult[column] = weatherData[column].tolist()
 
         return {
-            "rechtswert": self.rechtwert,
-            "hochwert": self.hochwert,
             "altitude": self.altitude,
             "kind": self.kind,
             "years": self.years,
             "latitude": self.latitude,
             "longitude": self.longitude,
             "TZ": self.tz,
-            "adjustTimestamp": self.adjustTimeStamp,
-            "recalculateDNI": self.recalculateDNI,
+            "adjustTimestamp": self.shouldAdjustTimestamp,
+            "recalculateDNI": self.shouldRecalculateDNI,
             "timeshiftInMinutes": self.timeshiftInMinutes,
             "weatherData": weatherDataResult
         }
@@ -157,8 +148,6 @@ class WeatherData:
         :return:
         """
         return {
-            **optConstruct.getInteger("rechtswert", "Rechtswert", required=True),
-            **optConstruct.getInteger("hochwert", "Hochwert", required=True),
             **optConstruct.getFloat("altitude", "Altitude", required=True),
             **optConstruct.getString("kind", "Kind Of Reference Year", required=True),
             **optConstruct.getString("years", "Years Span", required=True),

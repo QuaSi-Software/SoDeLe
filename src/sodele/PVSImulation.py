@@ -326,16 +326,16 @@ def simulatePVPlants(sodeleInput):
     :return:
     """
 
-    if sodeleInput.weatherData.shouldAdjustTimestamp and sodeleInput.weatherData.shouldRecalculateDNI:
-        logging().warning("Achtung: Eine Anpassung des Zeitstempels ohne eine Neuberechnung der Direknormalstrahlung kann zu einem fehlerhaften Datensatz führen!")
-
-    if sodeleInput.weatherData.shouldAdjustTimestamp:
-        sodeleInput.weatherData.adjustTimeStamp()
-
-    if sodeleInput.weatherData.shouldRecalculateDNI:
+    if not sodeleInput.weatherData.shouldAdjustTimestamp and sodeleInput.weatherData.shouldRecalculateDNI:
+        logging().warning("Attention: Adjusting the time stamp without recalculating the direct normal radiation may result in an incorrect data record!")
         sodeleInput.weatherData.recalculateDNI()
 
-    logging().info("Berechne PV-Profile und erstelle Grafiken für " + str(sodeleInput) + " PV-Anlage(n)...")
+    if sodeleInput.weatherData.shouldAdjustTimestamp and sodeleInput.weatherData.shouldRecalculateDNI:
+        sodeleInput.weatherData.adjustTimeStamp(sodeleInput.weatherData.timeshiftInMinutes)
+        sodeleInput.weatherData.recalculateDNI()
+        sodeleInput.weatherData.adjustTimeStamp(-sodeleInput.weatherData.timeshiftInMinutes)
+
+    logging().info("Calculate PV profiles and create graphs for " + str(sodeleInput) + " PV system(s)..")
 
     # call CalcPVPowerProfile and write calculated energy profile to list
     for currentIdx, currentPVPlant in enumerate(sodeleInput.photovoltaicPlants):

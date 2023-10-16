@@ -254,10 +254,14 @@ class PhotovoltaicPlant:
     def getModulesAndInverters(self):
         # set chosen module and inverter from database
         PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=self.modulesDatabasePath)
-        PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
-
         current_module = PV_modules[self.moduleName]
-        current_inverter = PV_inverters[self.inverterName]
+
+        if self.useInverterDatabase:
+            PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
+            current_inverter = PV_inverters[self.inverterName]
+        else:
+            PV_inverters = None
+            current_inverter = None
 
         return current_module, current_inverter
 
