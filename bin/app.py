@@ -2,7 +2,7 @@ import json
 import sys
 import os
 import win32api
-import pyproj              # [MIT Licence] transormation of coordinates for DWD data
+import pyproj              # [MIT Licence] transformation of coordinates for DWD data
 
 import pvlib
 import pandas as pd
@@ -251,7 +251,7 @@ def readInEPWFile(epwFile):
     hour = df_weather["hour"]
     df_weather["timeStamps"] = pd.to_datetime(dict(year=year, month=month, day=day, hour=hour))
 
-    logging().info("The EPW weather file '" + str(epwFile) + "' with " + str(df_weather.shape[0]) + " datapoints were read in successfully.")
+    logging().info("The EPW weather file '" + str(epwFile) + "' with " + str(df_weather.shape[0]) + " datapoints was read in successfully.")
 
     return sodele.WeatherData(
         altitude=metadata["altitude"],
@@ -270,7 +270,7 @@ def readInWeatherDataFile(weatherDataFile):
     if weatherDataFile.endswith(".dat"):
         df_weatherData, metadata = readInDatFile(weatherDataFile)
 
-        logging().info("The DWD .dat weather file '" + str(weatherDataFile) + "' of kind '" + str(metadata['kind'])[1:] + "' from the years" + str(metadata['years']) + " with " + str(df_weatherData.shape[0]) + " datapoints were read in successfully.")
+        logging().info("The DWD .dat weather file '" + str(weatherDataFile) + "' of kind '" + str(metadata['kind'])[1:] + "' from the years" + str(metadata['years']) + " with " + str(df_weatherData.shape[0]) + " datapoints was read in successfully.")
         
         return sodele.WeatherData(
             altitude=metadata["altitude"],

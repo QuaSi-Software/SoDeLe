@@ -256,12 +256,8 @@ class PhotovoltaicPlant:
         PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=self.modulesDatabasePath)
         current_module = PV_modules[self.moduleName]
 
-        if self.useInverterDatabase:
-            PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
-            current_inverter = PV_inverters[self.inverterName]
-        else:
-            PV_inverters = None
-            current_inverter = None
+        PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
+        current_inverter = PV_inverters[self.inverterName]
 
         return current_module, current_inverter
 
