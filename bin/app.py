@@ -260,9 +260,9 @@ def readInEPWFile(epwFile):
         latitude=metadata["latitude"],
         longitude=metadata["longitude"],
         tz=metadata["TZ"],
-        adjustTimestamp=False,
-        recalculateDNI=False,
-        timeshiftInMinutes=0,
+        adjustTimestamp=True,
+        recalculateDNI=True,
+        timeshiftInMinutes=30,
         df_weatherData=df_weather)
 
 
