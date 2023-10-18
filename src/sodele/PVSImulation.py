@@ -226,9 +226,9 @@ def generateSummaryDataFrame(sodeleInput):
     energyPerSystem = np.sum(np.array(energyProfileCollector), axis=1)  # [kWh]
     energyOverAllSystems = np.sum(energyProfileSum)  # [kWh]
     energyPerSystemArea = energyPerSystem / np.array(surfaceAreaCollector)  # [kWh/m^2]
-    energyOverAllSystemsArea = sum(energyPerSystemArea) / len(sodeleInput.photovoltaicPlants)  # [kWh/m^2]
+    energyOverAllSystemsArea = sum(energyProfileSum) / np.sum(surfaceAreaCollector)  # [kWh/m^2]
     energyKWPPerSystem = energyPerSystem / np.array(systemKWPCollector)  # [kWh/kWp]
-    energyKWPOverAllSystems = sum(energyKWPPerSystem) / len(sodeleInput.photovoltaicPlants)  # [kWh/kWp]
+    energyKWPOverAllSystems = sum(energyProfileSum) / np.sum(systemKWPCollector)  # [kWh/kWp]
 
     df_summary = pd.DataFrame()
     df_summary["Beschriebener Wert"] = ["Jahressumme Energieertrag [kWh]",
@@ -333,7 +333,6 @@ def simulatePVPlants(sodeleInput):
     if sodeleInput.weatherData.shouldAdjustTimestamp and sodeleInput.weatherData.shouldRecalculateDNI:
         sodeleInput.weatherData.adjustTimeStamp(sodeleInput.weatherData.timeshiftInMinutes)
         sodeleInput.weatherData.recalculateDNI()
-        sodeleInput.weatherData.adjustTimeStamp(-sodeleInput.weatherData.timeshiftInMinutes)
 
     logging().info("Calculate PV profiles and create graphs for " + str(sodeleInput) + " PV system(s)..")
 
