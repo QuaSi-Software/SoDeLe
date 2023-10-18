@@ -185,18 +185,20 @@ def generateEnergyProfileDataFrame(sodeleInput):
     """
     energyProfileColumns = []
     energyAreaProfileColumns = []
+    surfaceAreaCollector = []
     df_resultEnergyProfiles = pd.DataFrame()
     for currentIdx, currentPVPlant in enumerate(sodeleInput.photovoltaicPlants):
         energyProfileColumn = f"PV-Anlage {currentIdx}: Energieprofile [kWh]"
         df_resultEnergyProfiles[energyProfileColumn] = currentPVPlant.energyProfile
         energyProfileColumns.append(energyProfileColumn)
+        surfaceAreaCollector.append(currentPVPlant.surfaceArea)
 
         energyAreaProfileColumn = f"PV-Anlage {currentIdx}: Flächenspezifisches Energieprofil [kWh/m^2]"
         df_resultEnergyProfiles[energyAreaProfileColumn] = currentPVPlant.energyProfileArea
         energyAreaProfileColumns.append(energyAreaProfileColumn)
 
     df_resultEnergyProfiles["PV-Energieprofil aller Anlagen [kWh]"] = df_resultEnergyProfiles[energyProfileColumns].sum(axis=1)
-    df_resultEnergyProfiles["Flächenspezifisches PV-Energieprofil aller Anlagen [kWh/m^2]"] = (df_resultEnergyProfiles[energyAreaProfileColumns].sum(axis=1)) / len(energyAreaProfileColumns)
+    df_resultEnergyProfiles["Flächenspezifisches PV-Energieprofil aller Anlagen [kWh/m^2]"] = (df_resultEnergyProfiles[energyProfileColumns].sum(axis=1)) / np.sum(surfaceAreaCollector)
 
     return df_resultEnergyProfiles, energyProfileColumns, energyAreaProfileColumns
 
@@ -326,12 +328,12 @@ def simulatePVPlants(sodeleInput):
     :return:
     """
 
-    if not sodeleInput.weatherData.shouldAdjustTimestamp and sodeleInput.weatherData.shouldRecalculateDNI:
-        logging().warning("Attention: Adjusting the time stamp without recalculating the direct normal radiation may result in an incorrect data record!")
-        sodeleInput.weatherData.recalculateDNI()
-
-    if sodeleInput.weatherData.shouldAdjustTimestamp and sodeleInput.weatherData.shouldRecalculateDNI:
+    if sodeleInput.weatherData.shouldAdjustTimestamp:
         sodeleInput.weatherData.adjustTimeStamp(sodeleInput.weatherData.timeshiftInMinutes)
+
+    if sodeleInput.weatherData.shouldRecalculateDNI:
+        if not sodeleInput.weatherData.shouldAdjustTimestamp:
+            logging().warning("Attention: Adjusting the time stamp without recalculating the direct normal radiation may result in an incorrect data record!")
         sodeleInput.weatherData.recalculateDNI()
 
     logging().info("Calculate PV profiles and create graphs for " + str(sodeleInput) + " PV system(s)..")
