@@ -1,8 +1,9 @@
 import json
 import sys
 import os
-import win32api
-import pyproj              # [MIT Licence] transformation of coordinates for DWD data
+#import win32api
+import pyproj                               # [MIT Licence] transformation of coordinates for DWD data
+from geopy.geocoders import Nominatim       # [MIT Licence] get location from coordinates
 
 import pvlib
 import pandas as pd
@@ -363,6 +364,54 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot):
         plt.show()
 
 
+# Functino to receive location information and print them to the log
+def print_location_information(latitude, longitude):
+    # print location info of weather file
+    logging().info("-----")
+    logging().info("The coordinates given in the provided .dat-file or as input value are:")
+    logging().info("Latitude: " + str(latitude))
+    logging().info("Longitude: " + str(longitude))
+
+    # get location name using geopy (https://github.com/geopy/geopy) (MIT License)
+    try:
+        geolocator = Nominatim(user_agent="Sodele")
+        location = geolocator.reverse(str(latitude) + "," + str(longitude))
+        address = location.raw['address']
+
+        # find city, town, village or hamlet name
+        if isinstance(address.get('city'), str):
+            if isinstance(address.get('suburb'), str):
+                city = (address.get('city') + ' - ' + address.get('suburb') )
+            elif isinstance(address.get('city_district'), str):
+                city = (address.get('city') + ' - ' + address.get('city_district') )
+            else:
+                city = address.get('city')
+        elif isinstance(address.get('town'), str):
+            city = address.get('town')
+        elif isinstance(address.get('village'), str):
+            city = address.get('village')
+        elif isinstance(address.get('hamlet'), str):
+            city = address.get('hamlet')
+        else:
+            city = 'unknown city'
+
+        if isinstance(address.get('postcode'), str):
+            logging().info('City: ' + address.get('postcode') + ' ' + city )
+        else:
+             logging().info('City: ' + city )
+        if isinstance(address.get('state'), str):
+            logging().info('State: ' + address.get('state'))
+        if isinstance(address.get('country'), str):
+            logging().info('Country: ' + address.get('country'))
+    except Exception as e:
+        logging().info("Detailed information on the location could not be received from the online server...")
+        logging().info('Error message: ' + str(e))
+
+    logging().info("-----")
+
+    return
+
+
 def main(inputJson: dict, filePath):
     latitude = dictor(inputJson, "weatherData.latitude")
     longitude = dictor(inputJson, "weatherData.longitude")
@@ -373,6 +422,9 @@ def main(inputJson: dict, filePath):
         weatherData = readInTryData(latitude, longitude) # modified .dat file crawled from DWD and saved locally
     inputJson["weatherData"] = weatherData.serialize()
     sodeleInput = sodele.SodeleInput.deserialize(inputJson)
+
+    print_location_information(weatherData.latitude, weatherData.longitude)
+
     result = simulatePVPlants(sodeleInput)
 
     energyProfiles = []
@@ -403,7 +455,7 @@ if __name__ == "__main__":
     # get the path to the input json from argv
     pathToInputJson = sys.argv[1]
     #pathToInputJson = "./docs/testInput.json"
-    # pathToInputJson = "./dist/input.json"
+    #pathToInputJson = "./dist/231023_13-36-37.json"
 
     if not os.path.exists(pathToInputJson):
         raise FileNotFoundError(f"Could not find the input json at {pathToInputJson}")
