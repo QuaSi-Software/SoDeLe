@@ -1,25 +1,29 @@
 import json
-import sys
 import os
-#import win32api
-import pyproj                               # [MIT Licence] transformation of coordinates for DWD data
-from geopy.geocoders import Nominatim       # [MIT Licence] get location from coordinates
+import sys
 
-import pvlib
-import pandas as pd
+import dotenv
 import matplotlib.pyplot as plt
+import pandas as pd
+import pvlib
+import pyproj  # [MIT Licence] transformation of coordinates for DWD data
 import seaborn as sns
-from shapely.geometry import Point, Polygon
+from geopy.geocoders import Nominatim  # [MIT Licence] get location from coordinates
 
 import sodele
+from dbi.dbi_connect_get_token import get_token
+from dbi.dbi_fetch_weather_data import fetch_weather_data
 from sodele import simulatePVPlants
-from sodele.Helper.dictor import dictor
 from sodele.Config import logging
+from sodele.Helper.dictor import dictor
+
+# load the .env file
+dotenv.load_dotenv()
 
 
-def readInTryData(latitude, longitude):
+def requestTryData(latitude, longitude):
     """
-    Reads in the try data that has been predownload from "DWD Klimaberatungsmodule".
+    Requests in the try data that has been predownload from "DWD Klimaberatungsmodule".
 
     :param latitude:    The latitude.
     :type latitude:     float
@@ -28,28 +32,31 @@ def readInTryData(latitude, longitude):
     :return:    The try data.
     :rtype:     sodele.WeatherData
     """
-    with open("./src/sodele/res/try/regionGeometry.json", "r") as f:
-        regionGeometry = json.load(f)
+    DBI_CONNECT_URL = os.getenv('DBI_CONNECT_URL', "")
+    DBI_CONNECT_CLIENT_ID = os.getenv('DBI_CONNECT_CLIENT_ID', "")
+    DBI_CONNECT_CLIENT_SECRET = os.getenv('DBI_CONNECT_CLIENT_SECRET', "")
 
-    # check in which polygon the point is
-    currentPoint = Point(longitude, latitude)
-    currentPolygonID = None
-    for regionData in regionGeometry["features"]:
-        id = regionData["properties"]["id"]
-        coordinates = regionData["geometry"]["coordinates"][0]
-        polygon = Polygon(coordinates)
-        if polygon.contains(currentPoint):
-            currentPolygonID = id
-            break
+    DBI_DIETER_URL = os.getenv('DBI_DIETER_URL', "")
 
-    # read in the weather data
-    df_weatherData = readInDatFile_crawled(f"./src/sodele/res/try/regions/TRY2035_{str(currentPolygonID).zfill(4)}_Jahr.dat")
+    access_token = get_token(DBI_CONNECT_URL, DBI_CONNECT_CLIENT_SECRET, DBI_CONNECT_CLIENT_ID)
+    df_weatherData, latitude, longitude = fetch_weather_data(DBI_DIETER_URL, latitude, longitude, access_token)
+    month = df_weatherData["MM"]
+    day = df_weatherData["DD"]
+    hour = df_weatherData["HH"]
 
-    # TODO: theese values are not correct! They are missing in the predownloaded crawled data! Should be added in near future!!!
-    altitude = 200
+    # adjust units
+    df_weatherData["p"] = df_weatherData["p"] * 100  # convert hPa to Pa to be consistent with EPW
+
+    df_weatherData.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='H', tz=int(1 * 60 * 60)))
+    df_weatherData["temp_air"] = df_weatherData["t"]
+    df_weatherData["relative_humidity"] = df_weatherData["RF"]
+    df_weatherData["wind_speed"] = df_weatherData["WG"]
+    df_weatherData["atmospheric_pressure"] = df_weatherData["p"]
+    df_weatherData["dhi"] = df_weatherData["D"]  # diffus horizontal radiation, naming as in pvlib/EPW
+    df_weatherData["ghi"] = df_weatherData["dhi"] + df_weatherData["B"]  # global horizontal radiation = direct and diffuse horizontal radiation
 
     weatherData = sodele.WeatherData(
-        altitude=altitude,
+        altitude=0,
         kind="try",
         years=1,
         latitude=latitude,
@@ -60,57 +67,9 @@ def readInTryData(latitude, longitude):
         timeshiftInMinutes=30,
         df_weatherData=df_weatherData)
 
-    logging().info("The weather data has been loaded from predownloaded DWD TRY files for Lat: " + str(latitude) + " and Long: '" + str(longitude) + " with " + str(df_weatherData.shape[0]) + " datapoints successfully.")
+    logging().info(f"The weather data has been loaded from predownloaded DWD TRY files for Lat: '{latitude}' and Long: '{longitude}' with {df_weatherData.shape[0]} datapoints successfully.")
 
     return weatherData
-
-
-def readInDatFile_crawled(datFile):
-    # read in the weather data from predownloaded grid, files have no header
-    with open(datFile, "r") as f:
-        parsableData = ""
-        for idx, line in enumerate(f.readlines()):
-            if idx == 1:
-                continue
-            # strip whitespaces
-            line = line.strip()
-            # convert all whitespaces to single spaces
-            line = " ".join(line.split())
-            parsableData += line + "\n"
-    # remove the last newline
-    parsableData = parsableData[:-1]
-
-    # convert the data to a dict
-    data_dict = {}
-    column_mapper = {}
-    for idx, line in enumerate(parsableData.split("\n")):
-        columns = line.split(" ")
-        if idx == 0:
-            for column_idx, column in enumerate(columns):
-                column_mapper[column_idx] = column
-                data_dict[column] = []
-        else:
-            for column_idx, column_value in enumerate(columns):
-                column = column_mapper[column_idx]
-                data_dict[column].append(float(column_value))
-
-    df_data = pd.DataFrame.from_dict(data_dict)
-    df_weatherData = pd.DataFrame()
-    month = df_data["MM"]
-    day = df_data["DD"]
-    hour = df_data["HH"]
-    df_weatherData["timeStamps"] = pd.to_datetime(dict(year=2035, month=month, day=day, hour=hour))  # ToDo: adjust year! This is not necessarily correct here! But information is not given in predownloaded TRY from DWD...
-    df_weatherData.index = df_weatherData["timeStamps"]
-    df_weatherData["temp_air"] = df_data["t"]
-    df_weatherData["relative_humidity"] = df_data["RF"]
-    df_weatherData["wind_speed"] = df_data["WG"]
-    df_weatherData["atmospheric_pressure"] = df_data["p"] * 100  # convert hPa to Pa to be consistent with EPW
-    df_weatherData["dhi"] = df_data["D"]      # diffus horizontal radiation, naming as in pvlib/EPW
-    df_weatherData["ghi"] = df_weatherData["dhi"] + df_data["B"]   # global horizontal radiation = direct and diffuse horizontal radiation
-
-
-    return df_weatherData
-
 
 
 def readInDatFile(datFilePath):
@@ -165,7 +124,7 @@ def readInDatFile(datFilePath):
     # open file
     try:
         datfile = open(str(datFilePath), 'r')
-    except Exception as e: 
+    except Exception as e:
         raise ValueError(f"Could not read in the .dat weather data file {datFilePath}. The following error occured: " + str(e))
 
     # read metadata from header
@@ -173,8 +132,8 @@ def readInDatFile(datFilePath):
     currentline = 0
     for line in datfile:
         # read in line by line of header
-        row = line.rstrip().split(":",1)
-        
+        row = line.rstrip().split(":", 1)
+
         # assine header data to header dict if needed
         try:
             if currentline == 1:
@@ -192,9 +151,9 @@ def readInDatFile(datFilePath):
             elif currentline == 7:
                 value = str(row[1])
                 metadata['years'] = value
-            elif currentline == 32: # get column names for data as between column names and data is a separator line (***)
+            elif currentline == 32:  # get column names for data as between column names and data is a separator line (***)
                 columnnames = row[0].split()
-        except Exception as e: 
+        except Exception as e:
             raise ValueError(f"Could not read in the header of .dat weather data file {datFilePath}. The following error occured: " + str(e))
 
         currentline += 1
@@ -213,33 +172,33 @@ def readInDatFile(datFilePath):
     # write position information to metadata dict
     metadata['latitude'] = lat
     metadata['longitude'] = lon
-    metadata['TZ'] = 1   
+    metadata['TZ'] = 1
 
     # read data points
     # already used readline above, therefore no rows has to be skipped here!
-    try:                  
+    try:
         dat_data = pd.read_table(datfile, header=None, names=columnnames, delim_whitespace=True)
-    except Exception as e: 
+    except Exception as e:
         raise ValueError(f"Could not read the datapoints in the .dat weather data file {datFilePath}. The following error occured: " + str(e))
-   
+
     if dat_data.shape[0] != 8760:
-        raise ValueError(f"Could not read in the .dat weather data file {datFilePath}. "  + str(dat_data.shape[0]) + " datapoints has been read in instead of 8760. Checke the .dat file and make sure, that the datapoints begin with ""***""!" )
+        raise ValueError(f"Could not read in the .dat weather data file {datFilePath}. " + str(dat_data.shape[0]) + " datapoints has been read in instead of 8760. Checke the .dat file and make sure, that the datapoints begin with ""***""!")
 
     # create index that supplies correct date and time zone information
     # using 2015 as reference year and starting at 00:00 --> set to 00:30 for correct results!!! But in order to get constistency with epw, 00:00 is chosen.
-    dat_data.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='H', tz=int(metadata['TZ']*60*60)))  #tz in seconds with respect to GMT
+    dat_data.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='H', tz=int(metadata['TZ'] * 60 * 60)))  # tz in seconds with respect to GMT
 
     # adjust units 
     dat_data["p"] = dat_data["p"] * 100  # convert hPa to Pa to be consistent with EPW
-    
+
     df_weatherData = pd.DataFrame()
     df_weatherData.index = dat_data.index
     df_weatherData["temp_air"] = dat_data["t"]
     df_weatherData["relative_humidity"] = dat_data["RF"]
     df_weatherData["wind_speed"] = dat_data["WG"]
     df_weatherData["atmospheric_pressure"] = dat_data["p"]
-    df_weatherData["dhi"] = dat_data["D"]      # diffus horizontal radiation, naming as in pvlib/EPW
-    df_weatherData["ghi"] = df_weatherData["dhi"] + dat_data["B"]   # global horizontal radiation = direct and diffuse horizontal radiation
+    df_weatherData["dhi"] = dat_data["D"]  # diffus horizontal radiation, naming as in pvlib/EPW
+    df_weatherData["ghi"] = df_weatherData["dhi"] + dat_data["B"]  # global horizontal radiation = direct and diffuse horizontal radiation
 
     return df_weatherData, metadata
 
@@ -252,7 +211,7 @@ def readInEPWFile(epwFile):
     hour = df_weather["hour"]
     df_weather["timeStamps"] = pd.to_datetime(dict(year=year, month=month, day=day, hour=hour))
 
-    logging().info("The EPW weather file '" + str(epwFile) + "' with " + str(df_weather.shape[0]) + " datapoints was read in successfully.")
+    logging().info(f"The EPW weather file '{epwFile}' with {df_weather.shape[0]} datapoints was read in successfully.")
 
     return sodele.WeatherData(
         altitude=metadata["altitude"],
@@ -271,11 +230,12 @@ def readInWeatherDataFile(weatherDataFile):
     if weatherDataFile.endswith(".dat"):
         df_weatherData, metadata = readInDatFile(weatherDataFile)
 
-        logging().info("The DWD .dat weather file '" + str(weatherDataFile) + "' of kind '" + str(metadata['kind'])[1:] + "' from the years" + str(metadata['years']) + " with " + str(df_weatherData.shape[0]) + " datapoints was read in successfully.")
-        
+
+        logging().info(f"The DWD .dat weather file '{weatherDataFile}' of kind '{metadata['kind'][1:]}' from the years {metadata['years']} with {df_weatherData.shape[0]} datapoints was read in successfully.")
+
         return sodele.WeatherData(
             altitude=metadata["altitude"],
-            kind=metadata['kind'] + " of the years " + metadata['years'] ,
+            kind=metadata['kind'] + " of the years " + metadata['years'],
             years=1,
             latitude=metadata["latitude"],
             longitude=metadata["longitude"],
@@ -381,9 +341,9 @@ def print_location_information(latitude, longitude):
         # find city, town, village or hamlet name
         if isinstance(address.get('city'), str):
             if isinstance(address.get('suburb'), str):
-                city = (address.get('city') + ' - ' + address.get('suburb') )
+                city = (address.get('city') + ' - ' + address.get('suburb'))
             elif isinstance(address.get('city_district'), str):
-                city = (address.get('city') + ' - ' + address.get('city_district') )
+                city = (address.get('city') + ' - ' + address.get('city_district'))
             else:
                 city = address.get('city')
         elif isinstance(address.get('town'), str):
@@ -396,9 +356,9 @@ def print_location_information(latitude, longitude):
             city = 'unknown city'
 
         if isinstance(address.get('postcode'), str):
-            logging().info('City: ' + address.get('postcode') + ' ' + city )
+            logging().info('City: ' + address.get('postcode') + ' ' + city)
         else:
-             logging().info('City: ' + city )
+            logging().info('City: ' + city)
         if isinstance(address.get('state'), str):
             logging().info('State: ' + address.get('state'))
         if isinstance(address.get('country'), str):
@@ -416,10 +376,10 @@ def main(inputJson: dict, filePath):
     latitude = dictor(inputJson, "weatherData.latitude")
     longitude = dictor(inputJson, "weatherData.longitude")
     weatherDataFile = dictor(inputJson, "weatherData.weatherDataFile")
-    if weatherDataFile is not None:
+    if weatherDataFile is not None and False:
         weatherData = readInWeatherDataFile(weatherDataFile)  # .dat or .epw file externally given by absolute or relative path
     else:
-        weatherData = readInTryData(latitude, longitude) # modified .dat file crawled from DWD and saved locally
+        weatherData = requestTryData(latitude, longitude)  # modified .dat file crawled from DWD and saved locally
     inputJson["weatherData"] = weatherData.serialize()
     sodeleInput = sodele.SodeleInput.deserialize(inputJson)
 
@@ -453,9 +413,9 @@ def main(inputJson: dict, filePath):
 
 if __name__ == "__main__":
     # get the path to the input json from argv
-    #pathToInputJson = sys.argv[1]
+    # pathToInputJson = sys.argv[1]
     pathToInputJson = "./docs/testInput.json"
-    #pathToInputJson = "./dist/231023_13-36-37.json"
+    # pathToInputJson = "./dist/231023_13-36-37.json"
 
     if not os.path.exists(pathToInputJson):
         raise FileNotFoundError(f"Could not find the input json at {pathToInputJson}")

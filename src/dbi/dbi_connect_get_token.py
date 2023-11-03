@@ -3,9 +3,13 @@ import json
 import requests
 
 
-def get_token(url, secret, client):
+def get_token(dbi_connect_url, secret, client):
     """
     Gets a token from the DBI Connect server.
+
+    :param dbi_connect_url:     The URL of the DBI Connect server.
+    :param secret:              The client secret.
+    :param client:              The client ID.
     """
     data = {
         "grant_type": "client_credentials",
@@ -16,13 +20,10 @@ def get_token(url, secret, client):
     data = json.dumps(data)
 
     # get token
-    response = requests.post(url + "/token",
+    response = requests.post(dbi_connect_url + "/token",
                              data=data,
                              headers={"Content-Type": "application/json"})
 
-    try:
-        body = response.json()
-        access_token = body["access_token"]
-        return access_token
-    except Exception as e:
-        raise exceptions.Unauthorized()
+    body = response.json()
+    access_token = body["access_token"]
+    return access_token
