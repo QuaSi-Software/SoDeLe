@@ -10,8 +10,8 @@ __pycache__/
 *.so
 
 #
-docs/testInput/*.png
-docs/testInput/*.json
+docs/testInput_result/*.png
+docs/testInput_result/*.json
 
 
 # Distribution / packaging
