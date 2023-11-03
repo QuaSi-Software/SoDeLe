@@ -453,8 +453,8 @@ def main(inputJson: dict, filePath):
 
 if __name__ == "__main__":
     # get the path to the input json from argv
-    pathToInputJson = sys.argv[1]
-    #pathToInputJson = "./docs/testInput.json"
+    #pathToInputJson = sys.argv[1]
+    pathToInputJson = "./docs/testInput.json"
     #pathToInputJson = "./dist/231023_13-36-37.json"
 
     if not os.path.exists(pathToInputJson):
