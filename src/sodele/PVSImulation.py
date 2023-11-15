@@ -363,4 +363,4 @@ def simulatePVPlants(sodeleInput):
                              df_resultEnergyProfiles, energyProfileColumns, energyAreaProfileColumns,
                              df_summary, pvPlantColumns)
 
-    return result
+    return result, sodeleInput.photovoltaicPlants
