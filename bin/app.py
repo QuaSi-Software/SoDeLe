@@ -405,16 +405,6 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
             color_map[col] = matplotlib.colormaps.get_cmap('tab20')(i + 1)
 
     number_of_pv = len(df_energyProfileSummary.columns) - 1
-    max_value_hourly = 0
-    max_value_monthly = 0
-    max_value_weekly = 0
-    for pv_plant_idx in range(number_of_pv):
-        max_value_hourly = max(max_value_hourly, df_energyProfileSummary.iloc[:, pv_plant_idx].max())
-        df_weekly = df_energyProfileSummary.resample('W').sum()
-        df_monthly = df_energyProfileSummary.resample('M').sum()
-        max_value_weekly = max(max_value_weekly, df_weekly.iloc[:, pv_plant_idx].max())
-        max_value_monthly = max(max_value_monthly, df_monthly.iloc[:, pv_plant_idx].max())
-
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     weeks = [f"KW {i}" for i in range(1, 54)]
 
@@ -441,7 +431,7 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
     sum_pv_energy_area_related = sum(plantEnergySum) / sum(plantAreaTotal)
     sum_pv_energy = sum(plantEnergySum)
     color = color_map[df_energyProfileSummary.columns[sum_axis]]
-    create_hourly_plot_summed(df_energyProfileSummary, sum_axis, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, max_value=max_value_hourly)
+    create_hourly_plot_summed(df_energyProfileSummary, sum_axis, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related)
     plt.savefig(f"{resultPath}/Summiertes PV-Leistungsprofil aller PV-Anlagen.png")
 
     create_aggregated_plot_summed(df_energyProfileSummary, sum_axis, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'M', months, rot=-45)
