@@ -146,3 +146,14 @@ Requirements for DWD-dat file (corresponds to the output format of the DWD Clima
 **Note:** For the location-specific reference years of the DWD, a systematic deviation in the irradiation of the east and west facades (respective bevor and after noon) was found. The further east a location in Germany is, the greater the annual irradiation on an east facade (or in the morning bevore 12am). Conversely, the further west a location in Germany, the greater the annual sum of irradiation on a west facade (or in the afternon after 12am). The deviation is found to be up to +/- 15 %. The deviation of the radiation corresponds to a time shift of +/- 10 minutes of the time axis. This systematic error has not yet been taken into account and should be further investigated.
 
 
+## Commands
+
+Running the Script without command will run the pv simulation. The following parameters can be used:
+```
+--inputJson / -i <path/to/input.json> : path to the input file in JSON format
+```
+
+Running the script with the command ```generatePVDatabase``` will generate the databases for the PV modules and inverters. The following parameters can be used:
+```
+-path/ -p <path/to/generate/database> : path to the folder where the databases should be generated
+```

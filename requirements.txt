@@ -5,3 +5,4 @@ openpyxl==3.1.2
 pyproj==3.5.0
 geopy==2.3.0
 xlsxwriter==3.0.1
+click==8.1.7

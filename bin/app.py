@@ -1,7 +1,7 @@
 import json
 import os
-import sys
 
+import click
 import dotenv
 import matplotlib
 import matplotlib.pyplot as plt
@@ -231,7 +231,6 @@ def readInWeatherDataFile(weatherDataFile):
     if weatherDataFile.endswith(".dat"):
         df_weatherData, metadata = readInDatFile(weatherDataFile)
 
-
         logging().info(f"The DWD .dat weather file '{weatherDataFile}' of kind '{metadata['kind'][1:]}' from the years {metadata['years']} with {df_weatherData.shape[0]} datapoints was read in successfully.")
 
         return sodele.WeatherData(
@@ -254,8 +253,9 @@ def readInWeatherDataFile(weatherDataFile):
 
 def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, plantEnergyKWPSum, plantAreaTotal, plantPowerTotal, plantEnergySum):
     fignum = 0
+
     def create_hourly_plot(df_data, col_idx, color, sum_pv, sum_pv_power, sum_pv_area, max_value=None, with_text=True):
-        nonlocal fignum 
+        nonlocal fignum
         # Create a barplot of the data
         plt.figure(fignum)
         fignum += 1
@@ -418,7 +418,7 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
 
         create_aggregated_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'M', months, rot=-45)
         plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx} aggregated per month.png")
-        #close and dont show the plot
+        # close and dont show the plot
         plt.close()
 
         create_aggregated_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'W', weeks, rot=-45)
@@ -444,7 +444,6 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
     # close and dont show the plot
     plt.close()
 
-
     # create comparison plots
     create_hourly_compare_plot(df_energyProfileSummary, color_map)
     plt.savefig(f"{resultPath}/Vergleich PV-Energieprofil aller PV-Anlagen.png")
@@ -465,7 +464,7 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
 
     # close all remaining plots
     plt.close('all')
-    
+
 
 # Functino to receive location information and print them to the log
 def print_location_information(latitude, longitude):
@@ -515,16 +514,25 @@ def print_location_information(latitude, longitude):
     return
 
 
-def main(inputJson: dict, filePath):
-    latitude = dictor(inputJson, "weatherData.latitude")
-    longitude = dictor(inputJson, "weatherData.longitude")
-    weatherDataFile = dictor(inputJson, "weatherData.weatherDataFile")
+@click.command()
+@click.option('--inputJson', '-i', help='The path to the input json file.', required=True)
+def simulatePv(inputJson):
+    filePath = os.path.abspath(inputJson)
+    if not os.path.exists(inputJson):
+        raise FileNotFoundError(f"Could not find the input json at {inputJson}")
+
+    with open(inputJson, "r") as f:
+        inputJsonDict = json.load(f)
+
+    latitude = dictor(inputJsonDict, "weatherData.latitude")
+    longitude = dictor(inputJsonDict, "weatherData.longitude")
+    weatherDataFile = dictor(inputJsonDict, "weatherData.weatherDataFile")
     if weatherDataFile is not None:
         weatherData = readInWeatherDataFile(weatherDataFile)  # .dat or .epw file externally given by absolute or relative path
     else:
         weatherData = requestTryData(latitude, longitude)  # modified .dat file crawled from DWD and saved locally
-    inputJson["weatherData"] = weatherData.serialize()
-    sodeleInput = sodele.SodeleInput.deserialize(inputJson)
+    inputJsonDict["weatherData"] = weatherData.serialize()
+    sodeleInput = sodele.SodeleInput.deserialize(inputJsonDict)
 
     print_location_information(weatherData.latitude, weatherData.longitude)
 
@@ -564,13 +572,32 @@ def main(inputJson: dict, filePath):
     visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, sodeleInput.showPlots, plantEnergyKWPSum, plantAreaTotal, plantPowerTotal, plantEnergySum)
 
 
-if __name__ == "__main__":
-    # get the path to the input json from argv
-    pathToInputJson = sys.argv[1]
-    #pathToInputJson = "./docs/testInput.json"
+@click.command("generatePVDatabase")
+@click.option('--path', '-p', help='The path where to store the csv files', required=True)
+def generatePVDatabase(path):
+    from sodele.generatePVDatabase import generatePvLibDatabase
+    generatePvLibDatabase(path)
 
-    if not os.path.exists(pathToInputJson):
-        raise FileNotFoundError(f"Could not find the input json at {pathToInputJson}")
-    with open(pathToInputJson, "r") as f:
-        inputJson = json.load(f)
-    main(inputJson, filePath=pathToInputJson)
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
+    """
+    Sodele - Solar Energy Demand and Load Estimation
+
+    Sodele is a tool to estimate the energy demand and load of a building and to simulate the energy production of a photovoltaic plant.
+    """
+    if ctx.invoked_subcommand is None:
+        simulatePv()
+
+
+cli.add_command(simulatePv)
+cli.add_command(generatePVDatabase)
+
+
+def main():
+    cli()
+
+
+if __name__ == "__main__":
+    main()

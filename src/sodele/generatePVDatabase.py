@@ -1,12 +1,16 @@
-import os
+from pathlib import Path
 
 import pvlib
-import numpy as np
-import pandas as pd
-import datetime
 
 
-def generatePvLibDatabase():
+def generatePvLibDatabase(basePath):
+    """
+    Generates the PV database for the PVLib library.
+
+    :param basePath:    The base path.
+    :type basePath:     str
+    :return:
+    """
     # get all the names of the modules and inverters via CEC
     PV_modules = pvlib.pvsystem.retrieve_sam('cecmod')
     PV_inverters = pvlib.pvsystem.retrieve_sam('cecinverter')
@@ -36,10 +40,22 @@ def generatePvLibDatabase():
     df_pv_modules.columns = [generateName(col, unit) for col, unit in zip(df_pv_modules.columns, pv_modules_units_per_column.split(";"))]
     df_pv_inverters.columns = [generateName(col, unit) for col, unit in zip(df_pv_inverters.columns, pv_inverters_units_per_column.split(";"))]
 
+    basePath = Path(basePath)
+    # check if it is a directory
+    if not basePath.is_dir():
+        raise Exception("The given base path is not a directory.")
+
+    # create the directory if it does not exist
+    if not basePath.exists():
+        basePath.mkdir(parents=True)
+
+    cec_path = basePath / "221115_CEC_Modules.csv"
+    inverters_path = basePath / "221115_CEC_Inverters.csv"
+
     # save the dataframes to csv
-    df_pv_modules.to_csv("./src/sodele/res/PV_Database/221115_CEC_Modules.csv", sep=",", index=False)
-    df_pv_inverters.to_csv("./src/sodele/res/PV_Database/221115_CEC_Inverters.csv", sep=",", index=False)
+    df_pv_modules.to_csv(cec_path, sep=",", index=False)
+    df_pv_inverters.to_csv(inverters_path, sep=",", index=False)
 
 
 if __name__ == "__main__":
-    generatePvLibDatabase()
+    generatePvLibDatabase("./src/sodele/res/PV_Database")
