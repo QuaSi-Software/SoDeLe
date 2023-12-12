@@ -514,14 +514,14 @@ def print_location_information(latitude, longitude):
     return
 
 
-@click.command()
-@click.option('--inputJson', '-i', help='The path to the input json file.', required=True)
-def simulatePv(inputJson):
-    filePath = os.path.abspath(inputJson)
-    if not os.path.exists(inputJson):
-        raise FileNotFoundError(f"Could not find the input json at {inputJson}")
+@click.command("simulatePv")
+@click.option('--input_json', '-i', help='The path to the input json file.', required=True)
+def simulatePv(input_json):
+    filePath = os.path.abspath(input_json)
+    if not os.path.exists(input_json):
+        raise FileNotFoundError(f"Could not find the input json at {input_json}")
 
-    with open(inputJson, "r") as f:
+    with open(input_json, "r") as f:
         inputJsonDict = json.load(f)
 
     latitude = dictor(inputJsonDict, "weatherData.latitude")
@@ -579,25 +579,13 @@ def generatePVDatabase(path):
     generatePvLibDatabase(path)
 
 
-@click.group(invoke_without_command=True)
-@click.pass_context
-def cli(ctx):
-    """
-    Sodele - Solar Energy Demand and Load Estimation
-
-    Sodele is a tool to estimate the energy demand and load of a building and to simulate the energy production of a photovoltaic plant.
-    """
-    if ctx.invoked_subcommand is None:
-        simulatePv()
-
-
-cli.add_command(simulatePv)
-cli.add_command(generatePVDatabase)
-
-
+@click.group()
 def main():
-    cli()
+    pass
 
+
+main.add_command(simulatePv)
+main.add_command(generatePVDatabase)
 
 if __name__ == "__main__":
     main()

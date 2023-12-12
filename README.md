@@ -150,10 +150,10 @@ Requirements for DWD-dat file (corresponds to the output format of the DWD Clima
 
 Running the Script without command will run the pv simulation. The following parameters can be used:
 ```
---inputJson / -i <path/to/input.json> : path to the input file in JSON format
+simulatePv --input_json / -i <path/to/input.json> : path to the input file in JSON format
 ```
 
 Running the script with the command ```generatePVDatabase``` will generate the databases for the PV modules and inverters. The following parameters can be used:
 ```
--path/ -p <path/to/generate/database> : path to the folder where the databases should be generated
+generatePVDatabase --path/ -p <path/to/generate/database> : path to the folder where the databases should be generated
 ```
