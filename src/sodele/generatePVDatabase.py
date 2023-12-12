@@ -1,6 +1,11 @@
-from pathlib import Path
+import os
 
+import numpy as np
+import pandas as pd
 import pvlib
+
+from pathlib import Path
+from sodele.Config import logging
 
 
 def generatePvLibDatabase(basePath):
@@ -11,50 +16,42 @@ def generatePvLibDatabase(basePath):
     :type basePath:     str
     :return:
     """
-    # get all the names of the modules and inverters via CEC
-    PV_modules = pvlib.pvsystem.retrieve_sam('cecmod')
-    PV_inverters = pvlib.pvsystem.retrieve_sam('cecinverter')
+    modules_path = f"{basePath}/221115_CEC_Modules.csv"
+    inverters_path = f"{basePath}/221115_CEC_Inverters.csv"
 
-    df_pv_modules = PV_modules.transpose()
-    df_pv_inverters = PV_inverters.transpose()
+    if not os.path.exists(modules_path):
+        logging().warning(f"Fehler: Der Pfad zur PV-Moduldatenbank wurde nicht gefunden unter {basePath}")
+        assert False
 
-    # convert the index column to a "Name" column
-    df_pv_modules["Name"] = df_pv_modules.index
-    df_pv_inverters["Name"] = df_pv_inverters.index
+    if not os.path.exists(inverters_path):
+        logging().warning(f"Fehler: Die PV-Moduldatenbank wurde nicht gefunden unter {modules_path}")
+        assert False
 
-    # drop the index column
-    df_pv_modules = df_pv_modules.reset_index(drop=True)
-    df_pv_inverters = df_pv_inverters.reset_index(drop=True)
+    PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=modules_path)
+    PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=inverters_path)
 
-    # put the name column to the front
-    df_pv_modules = df_pv_modules[["Name"] + [col for col in df_pv_modules.columns if col != "Name"]]
-    df_pv_inverters = df_pv_inverters[["Name"] + [col for col in df_pv_inverters.columns if col != "Name"]]
+    # write to txt file
+    PVModules_names = pd.DataFrame(np.array(PV_modules.columns.values))
 
-    pv_modules_units_per_column = ";;;;;;m2;m;m;;A;V;A;V;A/K;V/K;C;V;A;A;Ohm;Ohm;%;%/K;;;"
-    pv_inverters_units_per_column = "Units;V;W;W;W;V;1/W;1/V;1/V;1/V;W;V;A;V;V;;;"
+    current_date = pd.Timestamp.now()
+    current_date = current_date.strftime("%Y-%m-%d")
+    txt_filename = f"{current_date}_PV_Modulnamen.txt"
+    # path name
+    writePath_Modules = Path(basePath) / txt_filename
 
-    def generateName(col, unit):
-        return f"{col} [{unit}]" if unit != "" else col
+    with open(writePath_Modules, 'w') as f:
+        OutputData_asString = PVModules_names.to_string(header=False, index=False)
+        f.write(OutputData_asString)
 
-    # add the units to the columns
-    df_pv_modules.columns = [generateName(col, unit) for col, unit in zip(df_pv_modules.columns, pv_modules_units_per_column.split(";"))]
-    df_pv_inverters.columns = [generateName(col, unit) for col, unit in zip(df_pv_inverters.columns, pv_inverters_units_per_column.split(";"))]
+    # write to txt file
+    PVInverter_names = pd.DataFrame(np.array(PV_inverters.columns.values))
+    txt_filename = f"{current_date}_PV_Inverter.txt"
+    # path name
+    writePath_Inverter = Path(basePath) / txt_filename
 
-    basePath = Path(basePath)
-    # check if it is a directory
-    if not basePath.is_dir():
-        raise Exception("The given base path is not a directory.")
-
-    # create the directory if it does not exist
-    if not basePath.exists():
-        basePath.mkdir(parents=True)
-
-    cec_path = basePath / "221115_CEC_Modules.csv"
-    inverters_path = basePath / "221115_CEC_Inverters.csv"
-
-    # save the dataframes to csv
-    df_pv_modules.to_csv(cec_path, sep=",", index=False)
-    df_pv_inverters.to_csv(inverters_path, sep=",", index=False)
+    with open(writePath_Inverter, 'w') as f:
+        OutputData_asString = PVInverter_names.to_string(header=False, index=False)
+        f.write(OutputData_asString)
 
 
 if __name__ == "__main__":
