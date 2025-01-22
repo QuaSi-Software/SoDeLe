@@ -121,7 +121,7 @@ cd  <path/to/local/sodele/repo/folder>
 <path/to/python.exe> bin/app.py simulatePv --input_json [or simply -i] <path/to/input.json>
 ```
 
-To manually built the `SoDeLe.exe`, run `python builtAsExe.py` in your locally cloned repository. A new executable will be created in the folder `/dist`, named `app.exe`, which can be renamed to `SoDeLe.exe` to be called by the Excel-GUI or by the console as described above.
+To manually built the `SoDeLe.exe`, run `python buildAsExe.py` in your locally cloned repository. A new executable will be created in the folder `/dist`, named `app.exe`, which can be renamed to `SoDeLe.exe` to be called by the Excel-GUI or by the console as described above.
 
 **Updating the PV module and inverter database** 
 
@@ -150,7 +150,7 @@ In order to achieve correct results of the PV simulation, the convention of the 
 As in the .dat files the direct normal radiation is not given, it is precalculated using functionalities of pvlib to determine the position of the sun. Here, also a timeshift is performed bevorhand to make sure that the radiation data is assigned to the correct time stamp and therefore to the correct position of the sun. This is important especially for facade-mounted PV modules. To check the accuracy of the time stamp shift, two PV plants facing towards a west and an east facade can be simulated and their annual irradiation have to be compared. If there is a deviation of > 15 %, the time stamp is usually wrong.
 
 
-Requirements for DWD-dat file (corresponds to the output format of the DWD Climate Consulting module as of 12/2022):
+Requirements for DWD-dat file (corresponds to the output format of the DWD Climate Consulting module as of 01/2025):
 
 - Measurement values are averages of the last time step
 - There must be exactly 8760 measurement values in one file (--> hourly resolution, no leap year)

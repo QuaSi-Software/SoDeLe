@@ -131,6 +131,7 @@ def readInDatFile(datFilePath):
     # read metadata from header
     metadata = dict()
     currentline = 0
+    lastrow = []
     for line in datfile:
         # read in line by line of header
         row = line.rstrip().split(":", 1)
@@ -152,16 +153,20 @@ def readInDatFile(datFilePath):
             elif currentline == 7:
                 value = str(row[1])
                 metadata['years'] = value
-            elif currentline == 32:  # get column names for data as between column names and data is a separator line (***)
-                columnnames = row[0].split()
         except Exception as e:
             raise ValueError(f"Could not read in the header of .dat weather data file {datFilePath}. The following error occured: " + str(e))
 
-        currentline += 1
-
-        # beak loop of reding the header if data block has startet. Begin of data has to start with "***""
+        # Break loop of reading the header if data block has startet. 
+        # Begin of data has to start with "***"" with coloum names in the line bevore
         if row[0] == '***':
+            try:
+                columnnames = lastrow[0].split()
+            except Exception as e:
+                raise ValueError(f"Could not read in the column names of .dat weather data file {datFilePath}. The following error occured: " + str(e))
             break
+
+        currentline += 1
+        lastrow = row
 
     # calculate latitude and longitude from Hochwert and Rechtswert from header
     # using pyproj from https://github.com/pyproj4/pyproj (MIT license)
@@ -414,15 +419,15 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
         sum_pv_energy = plantEnergySum[pv_plant_idx]
         color = color_map[df_energyProfileSummary.columns[pv_plant_idx]]
         create_hourly_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related)
-        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx}.png")
+        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx + 1}.png")
 
         create_aggregated_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'M', months, rot=-45)
-        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx} aggregated per month.png")
+        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx + 1} aggregated per month.png")
         # close and dont show the plot
         plt.close()
 
         create_aggregated_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'W', weeks, rot=-45)
-        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx} aggregated per week.png")
+        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx + 1} aggregated per week.png")
         # close and dont show the plot
         plt.close()
 

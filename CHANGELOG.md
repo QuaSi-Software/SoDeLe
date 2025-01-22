@@ -1,6 +1,10 @@
 # Changes made, features added and bugs fixed
 In general the development follows the [semantic versioning](https://semver.org/) scheme. 
 
+## Version 2.0.2
+- bugfix to make TRY 2045 *.dat-files from DWD readable again
+- change the numbering of saved figures to start with "1" instead of "0" to be consistent with the Excel GUI
+  
 ## Version 2.0.1
 - bugfix in the Excel GUI for Excel 2016 where the paths of the weather file and the executable file were not preserved when exporting the results
 
