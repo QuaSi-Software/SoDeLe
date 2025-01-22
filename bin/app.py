@@ -257,7 +257,7 @@ def readInWeatherDataFile(weatherDataFile):
 
 
 def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, plantEnergyKWPSum, plantAreaTotal, plantPowerTotal, plantEnergySum):
-    fignum = 0
+    fignum = 1
 
     def create_hourly_plot(df_data, col_idx, color, sum_pv, sum_pv_power, sum_pv_area, max_value=None, with_text=True):
         nonlocal fignum
@@ -265,7 +265,7 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
         plt.figure(fignum)
         fignum += 1
         sns.lineplot(data=df_data, x=df_data.index, y=df_data.columns[col_idx], color=color)
-        plt.title(f"PV-Leistungsprofil für PV-Anlage {col_idx}")
+        plt.title(f"PV-Leistungsprofil für PV-Anlage {col_idx + 1}")
         plt.xlabel('Zeitschritte im Jahr (entspricht Zeitschrittweite des Wetterdatensatzes)')
         plt.ylabel('el. Leistung gemittelt über Zeitschritt [kW]')
 
@@ -288,7 +288,7 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
         plt.figure(fignum)
         fignum += 1
         sns.barplot(data=df_data, x=df_data.index, y=df_data.columns[col_idx], color=color)
-        plt.title(f"PV-Leistungsprofil für PV-Anlage {col_idx}")
+        plt.title(f"PV-Leistungsprofil für PV-Anlage {col_idx + 1}")
         plt.xlabel('Zeitschritte im Jahr')
         plt.ylabel('el. Leistung gemittelt über Zeitschritt [kW]')
 
@@ -386,7 +386,7 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
 
     # create individual plots for each plant
     numberOfPlants = len(energyProfiles) - 1
-    columns = [f"PV_Plant_{i}" for i in range(numberOfPlants)] + ["Summary of all Plants"]
+    columns = [f"PV_Plant_{i+1}" for i in range(numberOfPlants)] + ["Summary of all Plants"]
 
     df_energyProfileSummary = pd.DataFrame()
     df_areaProfileSummary = pd.DataFrame()
