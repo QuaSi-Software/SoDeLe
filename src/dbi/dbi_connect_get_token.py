@@ -1,9 +1,10 @@
+from typing import cast
 import json
 
 import requests
 
 
-def get_token(dbi_connect_url, secret, client):
+def get_token(dbi_connect_url: str, secret: str, client: str) -> str:
     """
     Gets a token from the DBI Connect server.
 
@@ -11,19 +12,12 @@ def get_token(dbi_connect_url, secret, client):
     :param secret:              The client secret.
     :param client:              The client ID.
     """
-    data = {
-        "grant_type": "client_credentials",
-        "client_id": client,
-        "client_secret": secret,
-        "scope": ["profile", "email"]
-    }
-    data = json.dumps(data)
+    data = {"grant_type": "client_credentials", "client_id": client, "client_secret": secret, "scope": ["profile", "email"]}
+    data_serialized = json.dumps(data)
 
     # get token
-    response = requests.post(dbi_connect_url + "/token",
-                             data=data,
-                             headers={"Content-Type": "application/json"})
+    response = requests.post(dbi_connect_url + "/token", data=data_serialized, headers={"Content-Type": "application/json"})
 
     body = response.json()
-    access_token = body["access_token"]
-    return access_token
+    access_token = body.get("access_token", "")
+    return cast(str, access_token)

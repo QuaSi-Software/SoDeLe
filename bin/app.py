@@ -1,37 +1,38 @@
 import json
 import os
 
+import logging
+
 import click
 import dotenv
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import pvlib
-import pyproj  # [MIT Licence] transformation of coordinates for DWD data
+# [MIT Licence] transformation of coordinates for DWD data
+import pyproj
 import seaborn as sns
-from geopy.geocoders import Nominatim  # [MIT Licence] get location from coordinates
+# [MIT Licence] get location from coordinates
+from geopy.geocoders import Nominatim
 
 import sodele
 from dbi.dbi_connect_get_token import get_token
 from dbi.dbi_fetch_weather_data import fetch_weather_data
-from sodele import simulatePVPlants
-from sodele.Config import logging
-from sodele.Helper.dictor import dictor
+from sodele import simulate_pv_plants, WeatherEntry, WeatherData
 
 # load the .env file
 dotenv.load_dotenv()
 
+logger = logging.getLogger("sodele")
 
-def requestTryData(latitude, longitude):
+
+def request_try_data(latitude: float, longitude: float) -> WeatherData:
     """
-    Requests in the try data that has been predownload from "DWD Klimaberatungsmodule".
+    Requests in the try data that has been pre-download from "DWD Klimaberatungsmodule".
 
     :param latitude:    The latitude.
-    :type latitude:     float
     :param longitude:   The longitude.
-    :type longitude:    float
     :return:    The try data.
-    :rtype:     sodele.WeatherData
     """
     DBI_CONNECT_URL = os.getenv('DBI_CONNECT_URL', "")
     DBI_CONNECT_CLIENT_ID = os.getenv('DBI_CONNECT_CLIENT_ID', "")
@@ -66,14 +67,14 @@ def requestTryData(latitude, longitude):
         adjustTimestamp=True,
         recalculateDNI=True,
         timeshiftInMinutes=30,
-        df_weatherData=df_weatherData)
+    )
 
-    logging().info(f"The weather data has been loaded from predownloaded DWD TRY files for Lat: '{latitude}' and Long: '{longitude}' with {df_weatherData.shape[0]} datapoints successfully.")
+    logger.info(f"The weather data has been loaded from predownloaded DWD TRY files for Lat: '{latitude}' and Long: '{longitude}' with {df_weatherData.shape[0]} datapoints successfully.")
 
     return weatherData
 
 
-def readInDatFile(datFilePath):
+def read_in_dat_file(dat_file_path: str):
     """
     Function reads in *.dat files from DWD TRY dataset (download from https://kunden.dwd.de/obt/)
 
@@ -124,9 +125,9 @@ def readInDatFile(datFilePath):
     # read in the weather data in .dat weather file format as it comes from the DWD website
     # open file
     try:
-        datfile = open(str(datFilePath), 'r')
+        datfile = open(str(dat_file_path), 'r')
     except Exception as e:
-        raise ValueError(f"Could not read in the .dat weather data file {datFilePath}. The following error occured: " + str(e))
+        raise ValueError(f"Could not read in the .dat weather data file {dat_file_path}. The following error occured: " + str(e))
 
     # read metadata from header
     metadata = dict()
@@ -154,7 +155,7 @@ def readInDatFile(datFilePath):
                 value = str(row[1])
                 metadata['years'] = value
         except Exception as e:
-            raise ValueError(f"Could not read in the header of .dat weather data file {datFilePath}. The following error occured: " + str(e))
+            raise ValueError(f"Could not read in the header of .dat weather data file {dat_file_path}. The following error occured: " + str(e))
 
         # Break loop of reading the header if data block has startet. 
         # Begin of data has to start with "***"" with coloum names in the line bevore
@@ -162,7 +163,7 @@ def readInDatFile(datFilePath):
             try:
                 columnnames = lastrow[0].split()
             except Exception as e:
-                raise ValueError(f"Could not read in the column names of .dat weather data file {datFilePath}. The following error occured: " + str(e))
+                raise ValueError(f"Could not read in the column names of .dat weather data file {dat_file_path}. The following error occured: " + str(e))
             break
 
         currentline += 1
@@ -185,10 +186,10 @@ def readInDatFile(datFilePath):
     try:
         dat_data = pd.read_table(datfile, header=None, names=columnnames, delim_whitespace=True)
     except Exception as e:
-        raise ValueError(f"Could not read the datapoints in the .dat weather data file {datFilePath}. The following error occured: " + str(e))
+        raise ValueError(f"Could not read the datapoints in the .dat weather data file {dat_file_path}. The following error occured: " + str(e))
 
     if dat_data.shape[0] != 8760:
-        raise ValueError(f"Could not read in the .dat weather data file {datFilePath}. " + str(dat_data.shape[0]) + " datapoints has been read in instead of 8760. Checke the .dat file and make sure, that the datapoints begin with ""***""!")
+        raise ValueError(f"Could not read in the .dat weather data file {dat_file_path}. " + str(dat_data.shape[0]) + " datapoints has been read in instead of 8760. Checke the .dat file and make sure, that the datapoints begin with ""***""!")
 
     # create index that supplies correct date and time zone information
     # using 2015 as reference year and starting at 00:00 --> set to 00:30 for correct results!!! But in order to get constistency with epw, 00:00 is chosen.
@@ -217,7 +218,7 @@ def readInEPWFile(epwFile):
     hour = df_weather["hour"]
     df_weather["timeStamps"] = pd.to_datetime(dict(year=year, month=month, day=day, hour=hour))
 
-    logging().info(f"The EPW weather file '{epwFile}' with {df_weather.shape[0]} datapoints was read in successfully.")
+    logger.info(f"The EPW weather file '{epwFile}' with {df_weather.shape[0]} datapoints was read in successfully.")
 
     return sodele.WeatherData(
         altitude=metadata["altitude"],
@@ -232,11 +233,11 @@ def readInEPWFile(epwFile):
         df_weatherData=df_weather)
 
 
-def readInWeatherDataFile(weatherDataFile):
+def read_in_weather_data_file(weatherDataFile):
     if weatherDataFile.endswith(".dat"):
-        df_weatherData, metadata = readInDatFile(weatherDataFile)
+        df_weatherData, metadata = read_in_dat_file(weatherDataFile)
 
-        logging().info(f"The DWD .dat weather file '{weatherDataFile}' of kind '{metadata['kind'][1:]}' from the years {metadata['years']} with {df_weatherData.shape[0]} datapoints was read in successfully.")
+        logger.info(f"The DWD .dat weather file '{weatherDataFile}' of kind '{metadata['kind'][1:]}' from the years {metadata['years']} with {df_weatherData.shape[0]} datapoints was read in successfully.")
 
         return sodele.WeatherData(
             altitude=metadata["altitude"],
@@ -248,7 +249,7 @@ def readInWeatherDataFile(weatherDataFile):
             adjustTimestamp=True,
             recalculateDNI=True,
             timeshiftInMinutes=30,
-            df_weatherData=df_weatherData)
+        )
 
     elif weatherDataFile.endswith(".epw"):
         return readInEPWFile(weatherDataFile)
@@ -256,7 +257,7 @@ def readInWeatherDataFile(weatherDataFile):
         raise ValueError(f"Could not read in the weather data file {weatherDataFile}.")
 
 
-def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, plantEnergyKWPSum, plantAreaTotal, plantPowerTotal, plantEnergySum):
+def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot, plantEnergyKWPSum, plantAreaTotal, plantPowerTotal, plantEnergySum):
     fignum = 1
 
     def create_hourly_plot(df_data, col_idx, color, sum_pv, sum_pv_power, sum_pv_area, max_value=None, with_text=True):
@@ -474,10 +475,10 @@ def visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, showPlot, 
 # Functino to receive location information and print them to the log
 def print_location_information(latitude, longitude):
     # print location info of weather file
-    logging().info("-----")
-    logging().info("The coordinates given in the provided .dat-file or as input value are:")
-    logging().info("Latitude: " + str(latitude))
-    logging().info("Longitude: " + str(longitude))
+    logger.info("-----")
+    logger.info("The coordinates given in the provided .dat-file or as input value are:")
+    logger.info("Latitude: " + str(latitude))
+    logger.info("Longitude: " + str(longitude))
 
     # get location name using geopy (https://github.com/geopy/geopy) (MIT License)
     try:
@@ -503,25 +504,25 @@ def print_location_information(latitude, longitude):
             city = 'unknown city'
 
         if isinstance(address.get('postcode'), str):
-            logging().info('City: ' + address.get('postcode') + ' ' + city)
+            logger.info('City: ' + address.get('postcode') + ' ' + city)
         else:
-            logging().info('City: ' + city)
+            logger.info('City: ' + city)
         if isinstance(address.get('state'), str):
-            logging().info('State: ' + address.get('state'))
+            logger.info('State: ' + address.get('state'))
         if isinstance(address.get('country'), str):
-            logging().info('Country: ' + address.get('country'))
+            logger.info('Country: ' + address.get('country'))
     except Exception as e:
-        logging().info("Detailed information on the location could not be received from the online server...")
-        logging().info('Error message: ' + str(e))
+        logger.info("Detailed information on the location could not be received from the online server...")
+        logger.info('Error message: ' + str(e))
 
-    logging().info("-----")
+    logger.info("-----")
 
     return
 
 
 @click.command("simulatePv")
 @click.option('--input_json', '-i', help='The path to the input json file.', required=True)
-def simulatePv(input_json):
+def simulate_pv(input_json):
     filePath = os.path.abspath(input_json)
     if not os.path.exists(input_json):
         raise FileNotFoundError(f"Could not find the input json at {input_json}")
@@ -529,19 +530,19 @@ def simulatePv(input_json):
     with open(input_json, "r") as f:
         inputJsonDict = json.load(f)
 
-    latitude = dictor(inputJsonDict, "weatherData.latitude")
-    longitude = dictor(inputJsonDict, "weatherData.longitude")
-    weatherDataFile = dictor(inputJsonDict, "weatherData.weatherDataFile")
+    latitude = inputJsonDict.get("weatherData", {}).get("latitude", None)
+    longitude = inputJsonDict.get("weatherData", {}).get("longitude", None)
+    weatherDataFile = inputJsonDict.get("weatherData", {}).get("weatherDataFile", None)
     if weatherDataFile is not None:
-        weatherData = readInWeatherDataFile(weatherDataFile)  # .dat or .epw file externally given by absolute or relative path
+        weatherData = read_in_weather_data_file(weatherDataFile)  # .dat or .epw file externally given by absolute or relative path
     else:
-        weatherData = requestTryData(latitude, longitude)  # modified .dat file crawled from DWD and saved locally
-    inputJsonDict["weatherData"] = weatherData.serialize()
-    sodeleInput = sodele.SodeleInput.deserialize(inputJsonDict)
+        weatherData = request_try_data(latitude, longitude)  # modified .dat file crawled from DWD and saved locally
+    inputJsonDict["weatherData"] = weatherData.model_dump()
+    sodeleInput = sodele.SodeleInput.model_validate(inputJsonDict)
 
     print_location_information(weatherData.latitude, weatherData.longitude)
 
-    result, plantInfo = simulatePVPlants(sodeleInput)
+    result, plantInfo = simulate_pv_plants(sodeleInput)
 
     energyProfiles = []
     energyAreaProfiles = []
@@ -574,14 +575,14 @@ def simulatePv(input_json):
     with open(resultPath + "/result.json", "w") as f:
         json.dump(result, f, indent=4)
 
-    visualizePVPlants(energyProfiles, energyAreaProfiles, resultPath, sodeleInput.showPlots, plantEnergyKWPSum, plantAreaTotal, plantPowerTotal, plantEnergySum)
+    visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, sodeleInput.showPlots, plantEnergyKWPSum, plantAreaTotal, plantPowerTotal, plantEnergySum)
 
 
 @click.command("generatePVDatabase")
 @click.option('--path', '-p', help='The path where to store the csv files', required=True)
-def generatePVDatabase(path):
-    from sodele.generatePVDatabase import generatePvLibDatabase
-    generatePvLibDatabase(path)
+def generate_pv_database(path):
+    from sodele.core.generate_pv_database import generate_pv_lib_database
+    generate_pv_lib_database(path)
 
 
 @click.group()
@@ -589,8 +590,8 @@ def main():
     pass
 
 
-main.add_command(simulatePv)
-main.add_command(generatePVDatabase)
+main.add_command(simulate_pv)
+main.add_command(generate_pv_database)
 
 if __name__ == "__main__":
     main()
