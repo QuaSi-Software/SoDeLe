@@ -2,6 +2,7 @@ import json
 import os
 
 import logging
+from datetime import datetime
 
 import click
 import dotenv
@@ -231,7 +232,7 @@ def readInEPWFile(epwFile):
         recalculateDNI=True,
         timeshiftInMinutes=30,
         weatherData=WeatherEntry(
-            timeStamps=df_weather["year"].tolist(),
+            timeStamps=df_weather["timeStamps"].tolist(),
             month=df_weather["month"].tolist(),
             day=df_weather["day"].tolist(),
             hour=df_weather["hour"].tolist(),
@@ -242,8 +243,6 @@ def readInEPWFile(epwFile):
             sky_cover=df_weather["total_sky_cover"].tolist(),
             precipitable_water=df_weather["precipitable_water"].tolist(),
             relative_humidity=df_weather["relative_humidity"].tolist(),
-            # TODO
-            athmospheric_heat_irr=df_weather["relative_humidity"].tolist(),
             dni=df_weather["dni"].tolist(),
             ghi=df_weather["ghi"].tolist(),
             dhi=df_weather["dhi"].tolist()
