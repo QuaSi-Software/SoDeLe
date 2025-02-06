@@ -1,6 +1,8 @@
 import pandas as pd
 import pvlib
 import numpy as np
+from pandas import Index
+
 from sodele.interfaces.base import Base
 from pydantic import Field
 from datetime import datetime
@@ -44,7 +46,9 @@ class WeatherData(Base):
         return self._df_weatherData
 
     def model_post_init(self, __context: Any) -> None:
-        self._df_weatherData = pd.DataFrame.from_dict(self.weatherData.model_dump())
+        df = pd.DataFrame.from_dict(self.weatherData.model_dump())
+        df.index = self.weatherData.timeStamps
+        self._df_weatherData = df
 
     def adjust_time_stamp(self) -> None:
         """
@@ -75,13 +79,13 @@ class WeatherData(Base):
             self.latitude,
             self.longitude,
             altitude=self.altitude,
-            pressure=self.weatherData.atmospheric_pressure,
+            pressure=self.df_weatherData["atmospheric_pressure"],
             method="nrel_numpy",
         )
         # calculate direct normal irradiation using pvlib; fill nan values with zero nad replace -0.0 values with 0.0
         dni = pvlib.irradiance.dni(
-            self.weatherData.ghi,
-            self.weatherData.dhi,
+            self.df_weatherData["ghi"],
+            self.df_weatherData["dhi"],
             solar_position["zenith"],
         )
         dni = dni.fillna(0.0)

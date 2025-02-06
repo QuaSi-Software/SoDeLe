@@ -9,14 +9,14 @@ def get_database_paths(modules_database_type: int) -> Tuple[str, str]:
     :return:                        (ModuleDatabase, InverterDatabase)
     """
     if modules_database_type == 1:
-        moduleDatabasePath = "./app/res/PV_Database/220225_Sandia_Modules.csv"
-        inverterDatabasePath = "./app/res/PV_Database/221115_CEC_Inverters.csv"
+        moduleDatabasePath = "./src/sodele/res/PV_Database/220225_Sandia_Modules.csv"
+        inverterDatabasePath = "./src/sodele/res/PV_Database/221115_CEC_Inverters.csv"
         return moduleDatabasePath, inverterDatabasePath
 
     elif modules_database_type == 2:
-        moduleDatabasePath = "./app/res/PV_Database/221115_CEC_Modules.csv"
-        moduleDatabasePath = "./app/res/PV_Database/221115_CEC_Inverters.csv"
-        return moduleDatabasePath, moduleDatabasePath
+        moduleDatabasePath = "./src/sodele/res/PV_Database/221115_CEC_Modules.csv"
+        inverterDatabasePath = "./src/sodele/res/PV_Database/221115_CEC_Inverters.csv"
+        return moduleDatabasePath, inverterDatabasePath
 
     else:
         raise ValueError(f"Unknown modules database type: {modules_database_type}")

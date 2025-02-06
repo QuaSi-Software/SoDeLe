@@ -1,3 +1,4 @@
+import uuid
 from typing import Any
 
 import pvlib
@@ -9,7 +10,7 @@ from sodele.misc.database import get_database_paths
 
 
 class PhotovoltaicPlant(Base):
-    uid: str = Field(..., description="The unique identifier of the photovoltaic plant.")
+    uid: str = Field(default_factory=lambda: str(uuid.uuid4()), description="The unique identifier of the photovoltaic plant.")
     surfaceAzimuth: float = Field(0, description="The surface azimuth of the photovoltaic plant.")
     surfaceTilt: float = Field(0, description="The surface tilt of the photovoltaic plant.")
     modulesPerString: float = Field(0, description="The number of modules per string.")

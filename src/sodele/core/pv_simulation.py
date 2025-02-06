@@ -41,7 +41,8 @@ def calc_pv_power_profile(sodele_input: SodeleInput, current_pv_plant: Photovolt
     # load all available modules and inverters
     current_module, current_inverter = current_pv_plant.get_modules_and_inverters()
 
-    module_installation_switch = {1: "open_rack_glass_glass", 2: "open_rack_glass_polymer", 3: "close_mount_glass_glass", 4: "insulated_back_glass_polymer"}
+    module_installation_switch = {1: "open_rack_glass_glass", 2: "open_rack_glass_polymer",
+                                  3: "close_mount_glass_glass", 4: "insulated_back_glass_polymer"}
 
     module_installation_type = module_installation_switch[current_pv_plant.moduleInstallation]
 
@@ -90,30 +91,33 @@ def calc_pv_power_profile(sodele_input: SodeleInput, current_pv_plant: Photovolt
 
     dc_model = data_base_switch[current_pv_plant.modulesDatabaseType]
 
-    mc = pvlib.modelchain.ModelChain(system_mc, location, dc_model=dc_model, aoi_model="physical", dc_ohmic_model="dc_ohms_from_percent", losses_model="pvwatts")
+    mc = pvlib.modelchain.ModelChain(system_mc, location, dc_model=dc_model, aoi_model="physical",
+                                     dc_ohmic_model="dc_ohms_from_percent", losses_model="pvwatts")
 
     # calculate precipitate water as values in EWP-file are all zero and convert to dataframe
     if sodele_input.weatherData.df_weatherData is None:
         raise ValueError("No weather data available!")
 
     df_weather = sodele_input.weatherData.df_weatherData
-    precipitable_water = pvlib.atmosphere.gueymard94_pw(df_weather["temp_air"].values, df_weather["relative_humidity"].values)
-    precipitable_water_DF = pd.DataFrame(precipitable_water, columns=["precipitable_water"], index=df_weather["temp_air"].index)
+    precipitable_water = pvlib.atmosphere.gueymard94_pw(df_weather["temp_air"].values,
+                                                        df_weather["relative_humidity"].values)
+    precipitable_water_DF = pd.DataFrame(precipitable_water, columns=["precipitable_water"],
+                                         index=df_weather["temp_air"].index)
 
     # create DataFrame of albedo
-    albedo = pd.DataFrame(current_pv_plant.albedo * np.ones((df_weather["temp_air"].size, 1)), columns=["albedo"], index=df_weather["temp_air"].index)
+    albedo = pd.DataFrame(current_pv_plant.albedo * np.ones((df_weather["temp_air"].size, 1)), columns=["albedo"],
+                          index=df_weather["temp_air"].index)
 
     # create data frame with weather data including reduction factor as pvlib requests
     losses_irradiation = current_pv_plant.lossesIrradiation
-    weather_data = [
-        (1 - losses_irradiation / 100) * df_weather["ghi"],
-        (1 - losses_irradiation / 100) * df_weather["dni"],
-        (1 - losses_irradiation / 100) * df_weather["dhi"],
-        df_weather["temp_air"],
-        df_weather["wind_speed"],
-        precipitable_water_DF["precipitable_water"],
-        albedo["albedo"],
-    ]
+    weather_data = []
+    weather_data.append((1 - losses_irradiation / 100) * df_weather["ghi"])
+    weather_data.append((1 - losses_irradiation / 100) * df_weather["dni"])
+    weather_data.append((1 - losses_irradiation / 100) * df_weather["dhi"])
+    weather_data.append(df_weather["temp_air"])
+    weather_data.append(df_weather["wind_speed"])
+    weather_data.append(precipitable_water_DF["precipitable_water"])
+    weather_data.append(albedo["albedo"])
 
     weather = pd.concat(weather_data, axis=1)
 
@@ -186,7 +190,7 @@ def get_pv_gis_data(latitude: float, longitude: float) -> None:
     # except Exception as e:
     #    print('Fehler: Der TRY-Datensatz von PVGIS konnte nicht heruntergeladen werden.')
     #    print('Fehlermeldung: ' + str(e))
-    #    raise Exception("Fehler: Für den automatischen Bezug von TRY Wetterdaten von PVGIS müssen Latitute und Longitude angegeben sein!")
+    #    raise Exception("Fehler: Fuer den automatischen Bezug von TRY Wetterdaten von PVGIS muessen Latitute und Longitude angegeben sein!")
     #
     # # set flags for timeshift and recalculation of DNI
     # # Note: For PVGIS EPW TRY files of central europe, average timeshift is 75 minutes.
@@ -211,7 +215,7 @@ def generate_energy_profile_data_frame(sodele_input: SodeleInput) -> DataframeRe
     energy_area_profile_columns = []
     surface_area_collector = []
     df_result_energy_profiles: pd.DataFrame = pd.DataFrame()
-    for currentIdx, currentPVPlant in enumerate(sodele_input.photovoltaicPlants):
+    for currentIdx, currentPVPlant in enumerate(sodele_input.PhotovoltaicPlants):
         energy_profile_column = f"PV-Anlage {currentIdx}: Energieprofile [kWh]"
         df_result_energy_profiles[energy_profile_column] = currentPVPlant.energyProfile
         energy_profile_columns.append(energy_profile_column)
@@ -224,9 +228,12 @@ def generate_energy_profile_data_frame(sodele_input: SodeleInput) -> DataframeRe
     all_column = "PV-Energieprofil aller Anlagen [kWh]"
     df_result_energy_profiles[all_column] = df_result_energy_profiles[energy_profile_columns].sum(axis=1)
     all_area_column = "Flächenspezifisches PV-Energieprofil aller Anlagen [kWh/m^2]"
-    df_result_energy_profiles[all_area_column] = (df_result_energy_profiles[energy_profile_columns].sum(axis=1)) / np.sum(surface_area_collector)  # type: ignore
+    df_result_energy_profiles[all_area_column] = (df_result_energy_profiles[energy_profile_columns].sum(
+        axis=1)) / np.sum(surface_area_collector)  # type: ignore
 
-    return DataframeResults(df_resultEnergyProfiles=df_result_energy_profiles, energyProfileColumns=energy_profile_columns, energyAreaProfileColumns=energy_area_profile_columns)
+    return DataframeResults(df_resultEnergyProfiles=df_result_energy_profiles,
+                            energyProfileColumns=energy_profile_columns,
+                            energyAreaProfileColumns=energy_area_profile_columns)
 
 
 def generate_summary_data_frame(sodele_input: SodeleInput) -> SummaryResults:
@@ -240,7 +247,7 @@ def generate_summary_data_frame(sodele_input: SodeleInput) -> SummaryResults:
     energy_profile_area_collector = []
     surface_area_collector = []
     system_kwp_collector = []
-    for currentPVPlant in sodele_input.photovoltaicPlants:
+    for currentPVPlant in sodele_input.PhotovoltaicPlants:
         energy_profile_collector.append(currentPVPlant.energyProfile)
         energy_profile_area_collector.append(currentPVPlant.energyProfileArea)
         surface_area_collector.append(currentPVPlant.surfaceArea)
@@ -258,10 +265,12 @@ def generate_summary_data_frame(sodele_input: SodeleInput) -> SummaryResults:
     energy_kwp_over_all_systems = sum(energy_profile_sum) / np.sum(system_kwp_collector)  # type: ignore # [kWh/kWp]
 
     df_summary = pd.DataFrame()
-    df_summary["Beschriebener Wert"] = ["Jahressumme Energieertrag [kWh]", "Leistungsspezifischer Jahresertrag [kWh/kWp]", "Flächenspezifischer Jahresertrag [kWh/m^2]"]
+    df_summary["Beschriebener Wert"] = ["Jahressumme Energieertrag [kWh]",
+                                        "Leistungsspezifischer Jahresertrag [kWh/kWp]",
+                                        "Flächenspezifischer Jahresertrag [kWh/m^2]"]
 
     pv_plant_columns = []
-    for currentIdx, currentPVPlant in enumerate(sodele_input.photovoltaicPlants):
+    for currentIdx, currentPVPlant in enumerate(sodele_input.PhotovoltaicPlants):
         column_name = f"PV-Anlage {currentIdx}"
         pv_plant_columns.append(column_name)
         sum_of_energy = energy_per_system[currentIdx]
@@ -279,7 +288,8 @@ def generate_summary_data_frame(sodele_input: SodeleInput) -> SummaryResults:
     return SummaryResults(df_summary=df_summary, pvPlantColumns=pv_plant_columns)
 
 
-def build_result_dict(sodele_input: SodeleInput, energy_results: DataframeResults, summary_results: SummaryResults) -> SodeleResults:
+def build_result_dict(sodele_input: SodeleInput, energy_results: DataframeResults,
+                      summary_results: SummaryResults) -> SodeleResults:
     """
     Builds a dictionary with the results of the simulation.
 
@@ -298,7 +308,7 @@ def build_result_dict(sodele_input: SodeleInput, energy_results: DataframeResult
     df_summary = summary_results["df_summary"]
     pv_plant_columns = summary_results["pvPlantColumns"]
 
-    for pvIndex in range(len(sodele_input.photovoltaicPlants)):
+    for pvIndex in range(len(sodele_input.PhotovoltaicPlants)):
         energy_profile = df_result_energy_profiles[energy_profile_columns[pvIndex]].tolist()
         energy_area_profile = df_result_energy_profiles[energy_area_profile_columns[pvIndex]].tolist()
         summary = df_summary[pv_plant_columns[pvIndex]].tolist()
@@ -354,13 +364,14 @@ def simulate_pv_plants(sodele_input: SodeleInput) -> tuple[SodeleResults, list[P
 
     if sodele_input.weatherData.recalculateDNI:
         if not sodele_input.weatherData.adjustTimestamp:
-            logger.warning("Attention: Adjusting the time stamp without recalculating the direct normal radiation may result in an incorrect data record!")
+            logger.warning(
+                "Attention: Adjusting the time stamp without recalculating the direct normal radiation may result in an incorrect data record!")
         sodele_input.weatherData.recalculate_dni()
 
-    logger.info(f"Calculate PV profiles and create graphs for {len(sodele_input.photovoltaicPlants)} PV system(s)..")
+    logger.info(f"Calculate PV profiles and create graphs for {len(sodele_input.PhotovoltaicPlants)} PV system(s)..")
 
     # call CalcPVPowerProfile and write calculated energy profile to list
-    for currentIdx, currentPVPlant in enumerate(sodele_input.photovoltaicPlants):
+    for currentIdx, currentPVPlant in enumerate(sodele_input.PhotovoltaicPlants):
         results = calc_pv_power_profile(sodele_input, currentPVPlant)
         currentPVPlant.energyProfile = results["energyProfile"]
         currentPVPlant.surfaceArea = results["surfaceArea"]
@@ -384,4 +395,4 @@ def simulate_pv_plants(sodele_input: SodeleInput) -> tuple[SodeleResults, list[P
     # serialize the data to a json format
     result: SodeleResults = build_result_dict(sodele_input, energy_results, summary_results)
 
-    return result, sodele_input.photovoltaicPlants
+    return result, sodele_input.PhotovoltaicPlants

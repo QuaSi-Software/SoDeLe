@@ -230,7 +230,24 @@ def readInEPWFile(epwFile):
         adjustTimestamp=True,
         recalculateDNI=True,
         timeshiftInMinutes=30,
-        df_weatherData=df_weather)
+        weatherData=WeatherEntry(
+            timeStamps=df_weather["year"].tolist(),
+            month=df_weather["month"].tolist(),
+            day=df_weather["day"].tolist(),
+            hour=df_weather["hour"].tolist(),
+            temp_air=df_weather["temp_air"].tolist(),
+            atmospheric_pressure=df_weather["atmospheric_pressure"].tolist(),
+            wind_direction=df_weather["wind_direction"].tolist(),
+            wind_speed=df_weather["wind_speed"].tolist(),
+            sky_cover=df_weather["total_sky_cover"].tolist(),
+            precipitable_water=df_weather["precipitable_water"].tolist(),
+            relative_humidity=df_weather["relative_humidity"].tolist(),
+            # TODO
+            athmospheric_heat_irr=df_weather["relative_humidity"].tolist(),
+            dni=df_weather["dni"].tolist(),
+            ghi=df_weather["ghi"].tolist(),
+            dhi=df_weather["dhi"].tolist()
+        ))
 
 
 def read_in_weather_data_file(weatherDataFile):
@@ -266,15 +283,16 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
         plt.figure(fignum)
         fignum += 1
         sns.lineplot(data=df_data, x=df_data.index, y=df_data.columns[col_idx], color=color)
-        plt.title(f"PV-Leistungsprofil für PV-Anlage {col_idx + 1}")
+        plt.title(f"PV-Leistungsprofil fuer PV-Anlage {col_idx + 1}")
         plt.xlabel('Zeitschritte im Jahr (entspricht Zeitschrittweite des Wetterdatensatzes)')
-        plt.ylabel('el. Leistung gemittelt über Zeitschritt [kW]')
+        plt.ylabel('el. Leistung gemittelt ueber Zeitschritt [kW]')
 
         if max_value is None:
             max_value = df_data.iloc[:, col_idx].max()
 
         # set the y axis range from 0-1.1 times the max value
-        plt.ylim(0, max_value * 1.1)
+        max_value = max(max_value, 1)
+        plt.ylim(0, max_value)
         # set the x axis range from
         # write some text to the topleft
         if with_text:
@@ -289,15 +307,16 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
         plt.figure(fignum)
         fignum += 1
         sns.barplot(data=df_data, x=df_data.index, y=df_data.columns[col_idx], color=color)
-        plt.title(f"PV-Leistungsprofil für PV-Anlage {col_idx + 1}")
+        plt.title(f"PV-Leistungsprofil fuer PV-Anlage {col_idx + 1}")
         plt.xlabel('Zeitschritte im Jahr')
-        plt.ylabel('el. Leistung gemittelt über Zeitschritt [kW]')
+        plt.ylabel('el. Leistung gemittelt ueber Zeitschritt [kW]')
 
         if max_value is None:
             max_value = df_data.iloc[:, col_idx].max()
 
         # set the y axis range from 0-1.1 times the max value
-        plt.ylim(0, max_value * 1.1)
+        max_value = max(max_value, 1)
+        plt.ylim(0, max_value)
         # set the x axis range from
         # write some text to the topleft
         if with_text:
@@ -354,7 +373,8 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
         max_value = df_data['value'].max()
 
         # set the y axis range from 0-1.1 times the max value
-        plt.ylim(0, max_value * 1.1)
+        max_value = max(1, max_value * 1.1)
+        plt.ylim(0, max_value)
 
     def create_aggregated_compare_plot(df_data, color_map, aggregation, labels, rot=0):
         nonlocal fignum
@@ -373,12 +393,13 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
         sns.barplot(data=df_data, x=df_data.index, y="value", hue="PV-Anlage", palette=color_map)
         plt.title("Vergleich PV-Energieprofil aller PV-Anlagen")
         plt.xlabel('Zeitschritte im Jahr')
-        plt.ylabel('el. Leistung gemittelt über Zeitschritt [kW]')
+        plt.ylabel('el. Leistung gemittelt ueber Zeitschritt [kW]')
 
         max_value = df_data['value'].max()
 
         # set the y axis range from 0-1.1 times the max value
-        plt.ylim(0, max_value * 1.1)
+        max_val = max(1, max_value * 1.1)
+        plt.ylim(0, max_val)
 
         # set the xticks to the labels
         plt.xticks(range(len(labels)), labels)
@@ -391,8 +412,8 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
 
     df_energyProfileSummary = pd.DataFrame()
     df_areaProfileSummary = pd.DataFrame()
-    df_energyProfileSummary.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='H'))  # tz in seconds with respect to GMT
-    df_areaProfileSummary.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='H'))  # tz in seconds with respect to GMT
+    df_energyProfileSummary.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='h'))  # tz in seconds with respect to GMT
+    df_areaProfileSummary.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='h'))  # tz in seconds with respect to GMT
     for idx, col in enumerate(columns):
         # add the data to the dataframe
         df_energyProfileSummary[col] = energyProfiles[idx]
@@ -420,15 +441,15 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
         sum_pv_energy = plantEnergySum[pv_plant_idx]
         color = color_map[df_energyProfileSummary.columns[pv_plant_idx]]
         create_hourly_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related)
-        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx + 1}.png")
+        plt.savefig(f"{resultPath}/PV-Leistungsprofil fuer PV-Anlage {pv_plant_idx + 1}.png")
 
-        create_aggregated_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'M', months, rot=-45)
-        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx + 1} aggregated per month.png")
+        create_aggregated_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'ME', months, rot=-45)
+        plt.savefig(f"{resultPath}/PV-Leistungsprofil fuer PV-Anlage {pv_plant_idx + 1} aggregated per month.png")
         # close and dont show the plot
         plt.close()
 
         create_aggregated_plot(df_energyProfileSummary, pv_plant_idx, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'W', weeks, rot=-45)
-        plt.savefig(f"{resultPath}/PV-Leistungsprofil für PV-Anlage {pv_plant_idx + 1} aggregated per week.png")
+        plt.savefig(f"{resultPath}/PV-Leistungsprofil fuer PV-Anlage {pv_plant_idx + 1} aggregated per week.png")
         # close and dont show the plot
         plt.close()
 
@@ -440,7 +461,7 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
     create_hourly_plot_summed(df_energyProfileSummary, sum_axis, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related)
     plt.savefig(f"{resultPath}/Summiertes PV-Leistungsprofil aller PV-Anlagen.png")
 
-    create_aggregated_plot_summed(df_energyProfileSummary, sum_axis, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'M', months, rot=-45)
+    create_aggregated_plot_summed(df_energyProfileSummary, sum_axis, color, sum_pv_energy, sum_pv_energy_power_rel, sum_pv_energy_area_related, 'ME', months, rot=-45)
     plt.savefig(f"{resultPath}/Summiertes PV-Leistungsprofil aller PV-Anlagen aggregated per month.png")
     # close and dont show the plot
     plt.close()
@@ -454,7 +475,7 @@ def visualize_pv_plants(energyProfiles, energyAreaProfiles, resultPath, showPlot
     create_hourly_compare_plot(df_energyProfileSummary, color_map)
     plt.savefig(f"{resultPath}/Vergleich PV-Energieprofil aller PV-Anlagen.png")
 
-    create_aggregated_compare_plot(df_energyProfileSummary, color_map, 'M', months, rot=-45)
+    create_aggregated_compare_plot(df_energyProfileSummary, color_map, 'ME', months, rot=-45)
     plt.savefig(f"{resultPath}/Vergleich PV-Energieprofil aller PV-Anlagen aggregated per month.png")
     # close and dont show the plot
     plt.close()
@@ -520,8 +541,8 @@ def print_location_information(latitude, longitude):
     return
 
 
-@click.command("simulatePv")
-@click.option('--input_json', '-i', help='The path to the input json file.', required=True)
+# @click.command("simulatePv")
+# @click.option('--input_json', '-i', help='The path to the input json file.', required=True)
 def simulate_pv(input_json):
     filePath = os.path.abspath(input_json)
     if not os.path.exists(input_json):
@@ -542,7 +563,8 @@ def simulate_pv(input_json):
 
     print_location_information(weatherData.latitude, weatherData.longitude)
 
-    result, plantInfo = simulate_pv_plants(sodeleInput)
+    result_obj, plantInfo = simulate_pv_plants(sodeleInput)
+    result = result_obj.model_dump()
 
     energyProfiles = []
     energyAreaProfiles = []
@@ -585,13 +607,13 @@ def generate_pv_database(path):
     generate_pv_lib_database(path)
 
 
-@click.group()
-def main():
-    pass
-
-
-main.add_command(simulate_pv)
-main.add_command(generate_pv_database)
+# @click.group()
+# def main():
+#     pass
+#
+#
+# main.add_command(simulate_pv)
+# main.add_command(generate_pv_database)
 
 if __name__ == "__main__":
-    main()
+    simulate_pv("./docs/testInput.json")
