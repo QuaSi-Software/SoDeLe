@@ -1,3 +1,7 @@
+from typing import Any
+
+import pvlib
+
 from sodele.interfaces.base import Base
 from pydantic import Field
 
@@ -64,3 +68,13 @@ class PhotovoltaicPlant(Base):
     @property
     def invertersDatabasePath(self) -> str:
         return get_database_paths(self.modulesDatabaseType)[1]
+
+    def get_modules_and_inverters(self) -> Any:
+        # set chosen module and inverter from database
+        PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=self.modulesDatabasePath)
+        current_module = PV_modules[self.moduleName]
+
+        PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
+        current_inverter = PV_inverters[self.inverterName]
+
+        return current_module, current_inverter

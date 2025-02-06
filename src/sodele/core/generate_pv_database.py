@@ -7,7 +7,7 @@ import pvlib
 from pathlib import Path
 import logging
 
-logger = logging.getLogger("Sodele")
+logger = logging.getLogger("SoDeLe")
 
 
 def generate_pv_lib_database(basePath: str) -> None:

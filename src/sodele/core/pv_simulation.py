@@ -9,7 +9,7 @@ from sodele.interfaces.sodele_input import SodeleInput
 
 import logging
 
-logger = logging.getLogger("Sodele")
+logger = logging.getLogger("SoDeLe")
 
 
 class PvPlantResults(TypedDict):
@@ -39,8 +39,7 @@ def calc_pv_power_profile(sodele_input: SodeleInput, current_pv_plant: Photovolt
     """
     # start calculation
     # load all available modules and inverters
-    current_module = current_pv_plant.moduleName
-    current_inverter = current_pv_plant.inverterName
+    current_module, current_inverter = current_pv_plant.get_modules_and_inverters()
 
     module_installation_switch = {1: "open_rack_glass_glass", 2: "open_rack_glass_polymer", 3: "close_mount_glass_glass", 4: "insulated_back_glass_polymer"}
 

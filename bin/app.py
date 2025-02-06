@@ -23,7 +23,7 @@ from sodele import simulate_pv_plants, WeatherEntry, WeatherData
 # load the .env file
 dotenv.load_dotenv()
 
-logger = logging.getLogger("sodele")
+logger = logging.getLogger("SoDeLe")
 
 
 def request_try_data(latitude: float, longitude: float) -> WeatherData:
