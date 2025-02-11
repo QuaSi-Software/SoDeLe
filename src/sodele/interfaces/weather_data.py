@@ -1,7 +1,7 @@
 import pandas as pd
 import pvlib
 import numpy as np
-from pandas import Timestamp
+from datetime import datetime
 import pytz
 
 from sodele.interfaces.base import Base
@@ -10,7 +10,7 @@ from typing import Any, cast
 
 
 class WeatherEntry(Base):
-    timeStamps: list[Timestamp] = Field(..., description="Time Stamps")
+    timeStamps: list[datetime] = Field(..., description="Time Stamps")
     month: list[int] = Field(..., description="Month")
     day: list[int] = Field(..., description="Day")
     hour: list[int] = Field(..., description="Hour")
