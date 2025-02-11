@@ -161,7 +161,7 @@ def calc_pv_power_profile(sodele_input: SodeleInput, current_pv_plant: Photovolt
     pv_energy_profile = pv_power_profile.values * 8760 / pv_power_profile.size  # [Wh]
 
     return PvPlantResults(
-        energyProfile=pv_energy_profile.tolist(),  # in [Wh]
+        energyProfile=(pv_energy_profile / 1000).tolist(),  # in [kWh]
         surfaceArea=module_surface_area,  # in [m^2]
         sumOfEnergyPerYear=pv_energy_profile.sum() / 1_000,  # in [kWh]
     )
