@@ -2,6 +2,7 @@ import pandas as pd
 import pvlib
 import numpy as np
 from pandas import Timestamp
+import pytz
 
 from sodele.interfaces.base import Base
 from pydantic import Field
@@ -51,8 +52,18 @@ class WeatherData(Base):
 
     def generate_df(self) -> None:
         df = pd.DataFrame.from_dict(self.weatherData.model_dump())
+        time_zone = self.tz
+        offset = pytz.FixedOffset(time_zone * 60)
         pd_time_series = pd.to_datetime(df["timeStamps"])
+        # check if has tz info
+        entry = pd_time_series[0]
+        if entry.tzinfo is None:
+            pd_time_series = pd_time_series.apply(lambda x: x.tz_localize(offset))
+            # subtract time_tone hours
+            pd_time_series = pd_time_series.apply(lambda x: x - pd.Timedelta(hours=1))
+        self.weatherData.timeStamps = pd_time_series.to_list()
         df.index = pd_time_series
+        df["timeStamps"] = pd_time_series
         self._df_weatherData = df
 
     def adjust_time_stamp(self) -> None:

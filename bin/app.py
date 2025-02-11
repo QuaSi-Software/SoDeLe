@@ -80,7 +80,7 @@ def read_in_dat_file(dat_file_path: str):
     Function reads in *.dat files from DWD TRY dataset (download from https://kunden.dwd.de/obt/)
 
     The timestamp of the result will always start at 01.01.2015 at 00:00 in order to be consistent with the alternative epw input data.
-    Therefore, a realculation is needed with 30 Minute shift to start at 00:30 for correct results to account for the correct assignement of irradiation data and solar position. 
+    Therefore, a realculation is needed with 30 Minute shift to start at 00:30 for correct results to account for the correct assignement of irradiation data and solar position.
 
     Requirements on dat file:
     - has to be houly data with 8760 timesteps per datafile
@@ -92,7 +92,7 @@ def read_in_dat_file(dat_file_path: str):
     1 ...
     2 Rechtswert        : 3936500 Meter
     3 Hochwert          : 2449500 Meter
-    4 Hoehenlage        : 450 Meter ueber NN 
+    4 Hoehenlage        : 450 Meter ueber NN
     ...
     7 Art des TRY       : mittleres Jahr
     8 Bezugszeitraum    : 1995-2012
@@ -116,7 +116,7 @@ def read_in_dat_file(dat_file_path: str):
     A  Bestrahlungsstaerke d. atm. Waermestrahlung (horiz. Ebene)    [W/m^2]   abwaerts gerichtet: positiv
     E  Bestrahlungsstaerke d. terr. Waermestrahlung                  [W/m^2]   aufwaerts gerichtet: negativ
     IL Qualitaetsbit bezueglich der Auswahlkriterien                           {0;1;2;3;4}
-    
+
     Output:
     - DataFrame with [0] header data and [1] weather data
     - coordinates will be transformes in standard WGS 84 system and writte to header data
@@ -158,7 +158,7 @@ def read_in_dat_file(dat_file_path: str):
         except Exception as e:
             raise ValueError(f"Could not read in the header of .dat weather data file {dat_file_path}. The following error occured: " + str(e))
 
-        # Break loop of reading the header if data block has startet. 
+        # Break loop of reading the header if data block has startet.
         # Begin of data has to start with "***"" with coloum names in the line bevore
         if row[0] == '***':
             try:
@@ -173,7 +173,7 @@ def read_in_dat_file(dat_file_path: str):
     # calculate latitude and longitude from Hochwert and Rechtswert from header
     # using pyproj from https://github.com/pyproj4/pyproj (MIT license)
     inProj = 'EPSG:3034'  # Input Projection: EPSG system used by DWD for TRY data (Lambert-konforme konische Projektion)
-    outProj = 'EPSG:4326'  # Output Projection: World Geodetic System 1984 (WGS 84) 
+    outProj = 'EPSG:4326'  # Output Projection: World Geodetic System 1984 (WGS 84)
     transformer = pyproj.Transformer.from_crs(inProj, outProj)
     lat, lon = transformer.transform(metadata['Hochwert'], metadata['Rechtswert'])
 
@@ -196,7 +196,7 @@ def read_in_dat_file(dat_file_path: str):
     # using 2015 as reference year and starting at 00:00 --> set to 00:30 for correct results!!! But in order to get constistency with epw, 00:00 is chosen.
     dat_data.index = pd.DatetimeIndex(pd.date_range(start=f'{2015}-01-01 00:00:00', end=f'{2015}-12-31 23:00:00', freq='H', tz=int(metadata['TZ'] * 60 * 60)))  # tz in seconds with respect to GMT
 
-    # adjust units 
+    # adjust units
     dat_data["p"] = dat_data["p"] * 100  # convert hPa to Pa to be consistent with EPW
 
     df_weatherData = pd.DataFrame()

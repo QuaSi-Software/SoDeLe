@@ -384,7 +384,7 @@ def simulate_pv_plants(sodele_input: SodeleInput) -> tuple[SodeleResults, list[P
     summary_results: SummaryResults = generate_summary_data_frame(sodele_input)
 
     # write the results
-    if sodele_input.keep_files:
+    if sodele_input.keep_files or True:
         filename = f"./tmp/{sodele_input.uuid}_pv_simulation.xlsx"
         with pd.ExcelWriter(filename, engine="xlsxwriter") as xlsxWriter:
             df_result_energy_profiles = energy_results["df_resultEnergyProfiles"]
