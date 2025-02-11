@@ -1,4 +1,4 @@
-# **SoDeLe - Solar Simulation Made Easy**
+﻿# **SoDeLe - Solar Simulation Made Easy**
 
 SoDeLe is part of the QuaSi project [http://www.quasi-software.org](http://www.quasi-software.org).
 
@@ -6,7 +6,7 @@ SoDeLe is part of the QuaSi project [http://www.quasi-software.org](http://www.q
 
 ## **Name and purpose**
 
-*SoDeLe* is a simple python-based tool that can calculate energy profiles of photovoltaik (PV) plants. They are calculated for specific PV modules combined with a specific inverter and a given orientation of the PV modules for a specified weather file. *SoDeLe* uses the python library [pvlib](https://doi.org/10.21105/joss.00884). The required weather input files have to be provided as EPW-standard (EnergyPlus� weather file) or as .dat weather data files from the German Weather Service (DWD) (see below for available sources).
+*SoDeLe* is a simple python-based tool that can calculate energy profiles of photovoltaik (PV) plants. They are calculated for specific PV modules combined with a specific inverter and a given orientation of the PV modules for a specified weather file. *SoDeLe* uses the python library [pvlib](https://doi.org/10.21105/joss.00884). The required weather input files have to be provided as EPW-standard (EnergyPlus© weather file) or as .dat weather data files from the German Weather Service (DWD) (see below for available sources).
 
 With the provided GUI implemented in Excel, up to 10 differently oriented PV modules can be simulated separately. There is a simple and an advanced input interface. *SoDeLe* can also be used directly in python or the precompiled .exe can be called with the required input file (JSON format). For futher details, see the description below. 
 
@@ -72,8 +72,8 @@ The JSON input file has to be structured in the following format:
 
 Note that the `moduleName` and the `inverterName` has to match the internal name of the databases used in pvlib. They are provided in the extended Excel GUI including some technical parameters. Note that even if `useInverterDatabase = false`, a valid inverter name has to be given to make pvlib work correctly. For the `weatherData`, the latitude and longitude are only needed if a request to the (commercial) DIETER service is performed. Otherwise, the path to a local weather file has to be given. All input parameter for each `PhotovoltaicPlant` are described below:
 
-- `surfaceAzimuth`: azimuth angle of the PV modules (0° = north, 90° = east, 180° = south 270° = west)
-- `surfaceTilt`: tilt angle of the PV modules (0° = flat on the earth, 90° = means vertically)
+- `surfaceAzimuth`: azimuth angle of the PV modules (0Â° = north, 90Â° = east, 180Â° = south 270Â° = west)
+- `surfaceTilt`: tilt angle of the PV modules (0Â° = flat on the earth, 90Â° = means vertically)
 - `modulesPerString`: the number of modules that are connected to one string (series connection)
 - `stringsPerInverter`: the number of strings that are connected to one inverter (parallel connection of strings)
 - `numberOfInverters`: total number of inverters (the number of modules is then numberOfInverters * stringsPerInverter * modulesPerString)
@@ -140,7 +140,7 @@ The databases for the PV modules and the invertes have to be named as `CEC_Modul
 ## **Weather data**
 Accurate weather datasets are the basis for the PV simulation. Weather data can be read in by *SoDeLe* as both .epw and .dat files:
 
-- EPW (EnergyPlus� weather file) is a standardized weather file format defined by EnergyPlus�. For further details see [https://designbuilder.co.uk/cahelp/Content/EnergyPlusWeatherFileFormat.htm](https://designbuilder.co.uk/cahelp/Content/EnergyPlusWeatherFileFormat.htm). EPW weather files for specific locations around the world as typical meteorological year (TMY) can be downloaded from different sources. An overview of free sources for EPW weather files can be found [here]([here](https://designbuilder.co.uk/cahelp/Content/FreeWeatherData.htm)).
+- EPW (EnergyPlus© weather file) is a standardized weather file format defined by EnergyPlus©. For further details see [https://designbuilder.co.uk/cahelp/Content/EnergyPlusWeatherFileFormat.htm](https://designbuilder.co.uk/cahelp/Content/EnergyPlusWeatherFileFormat.htm). EPW weather files for specific locations around the world as typical meteorological year (TMY) can be downloaded from different sources. An overview of free sources for EPW weather files can be found [here]([here](https://designbuilder.co.uk/cahelp/Content/FreeWeatherData.htm)).
 - The .dat files are a specific file format of the German Weather Service. They provide typical meteorologiacal weather data for 2015 as well as a future projection for 2045 in a high spacial resolution for Germany. The weather files can be downloaded for free and can be imported directly in *SoDeLe*. The .dat files are avaiable at the German Weather Service's Climate Consulting module [https://kunden.dwd.de/obt/](https://kunden.dwd.de/obt/). Note that a free registration is required to access the data.
 
 **Preprocessing of weather data in *SoDeLe*:**
@@ -179,6 +179,6 @@ The presets of the albedo coefficients provided in the Excel-GUI originate from 
 
 The coefficients for the PV Modules and Inverters are from the [System Advisor Model (SAM) by National Renewable Energy Laboratory](https://github.com/NREL/SAM/tree/develop/deploy/libraries) and from the [pvlib repository](https://github.com/pvlib/pvlib-python/tree/main/pvlib/data).
 
-The included weather files originates from the [Klimaberatungsmodul](https://kunden.dwd.de/obt/) of the German Weather Service (DWD) converted using the [EnergyPlus� Weather Converter](https://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/using-the-weather-converter.html).
+The included weather files originates from the [Klimaberatungsmodul](https://kunden.dwd.de/obt/) of the German Weather Service (DWD) converted using the [EnergyPlus© Weather Converter](https://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/using-the-weather-converter.html).
 
 The licenses are included in the respecitve folders.
