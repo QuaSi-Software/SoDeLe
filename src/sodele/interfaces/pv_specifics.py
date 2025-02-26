@@ -25,7 +25,7 @@ class PhotovoltaicPlant(Base):
     lossesDCCables: float = Field(0.0, description="The losses due to the cables.")
     modulesDatabaseType: int = Field(1, description="The type of the modules database. (1 = CEC, 2 = Sandia)")
     useInverterDatabase: bool = Field(False, description="Whether to use the inverter database.")
-    inverterName: str = Field(..., description="The name of the inverter.")
+    inverterName: str | None = Field(None, description="The name of the inverter.")
     useStandByPowerInverter: bool = Field(False, description="Whether to use the standby power inverter.")
     inverterEta: float = Field(0.92, description="The efficiency of the inverter.")
 
@@ -71,12 +71,14 @@ class PhotovoltaicPlant(Base):
     def invertersDatabasePath(self) -> str:
         return get_database_paths(self.modulesDatabaseType)[1]
 
-    def get_modules_and_inverters(self) -> tuple[pd.Series, pd.Series]:
+    def get_modules_and_inverters(self) -> tuple[pd.Series, pd.Series | None]:
         # set chosen module and inverter from database
         PV_modules = pvlib.pvsystem.retrieve_sam(name=None, path=self.modulesDatabasePath)
         current_module = PV_modules[self.moduleName]
 
-        PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
-        current_inverter = PV_inverters[self.inverterName]
+        current_inverter = None
+        if self.useInverterDatabase:
+            PV_inverters = pvlib.pvsystem.retrieve_sam(name=None, path=self.invertersDatabasePath)
+            current_inverter = PV_inverters[self.inverterName]
 
         return current_module, current_inverter

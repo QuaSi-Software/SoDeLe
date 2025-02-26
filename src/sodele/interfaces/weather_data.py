@@ -28,6 +28,14 @@ class WeatherEntry(Base):
     class Config:
         arbitrary_types_allowed = True
 
+    def convert_timestamps_to_strings(self) -> list[str]:
+        return [ts.isoformat() for ts in self.timeStamps]
+
+    def model_dump(self, *args, **kwargs) -> dict:
+        data = super().model_dump(*args, **kwargs)
+        data['timeStamps'] = self.convert_timestamps_to_strings()
+        return data
+
 
 class WeatherData(Base):
     altitude: float = Field(..., description="Altitude")
@@ -42,6 +50,11 @@ class WeatherData(Base):
     weatherData: WeatherEntry = Field(..., description="Weather Data")
 
     _df_weatherData: pd.DataFrame | None = None
+
+    def model_dump(self, *args, **kwargs) -> dict:
+        data = super().model_dump(*args, **kwargs)
+        data['weatherData'] = self.weatherData.model_dump()
+        return data
 
     @property
     def df_weatherData(self) -> pd.DataFrame | None:
