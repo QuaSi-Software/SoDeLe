@@ -1,11 +1,11 @@
 import pandas as pd
 import pvlib
 import numpy as np
-from pandas import Index
+from datetime import datetime
+import pytz
 
 from sodele.interfaces.base import Base
 from pydantic import Field
-from datetime import datetime
 from typing import Any, cast
 
 
@@ -21,10 +21,12 @@ class WeatherEntry(Base):
     sky_cover: list[float] = Field(..., description="Sky Cover")
     precipitable_water: list[float] = Field(..., description="Precipitable Water")
     relative_humidity: list[float] = Field(..., description="Relative Humidity")
-    athmospheric_heat_irr: list[float] = Field(..., description="Athmospheric Heat Irradiance")
     dni: list[float] = Field(..., description="Direct Normal Irradiance")
     ghi: list[float] = Field(..., description="Global Horizontal Irradiance")
     dhi: list[float] = Field(..., description="Diffuse Horizontal Irradiance")
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class WeatherData(Base):
@@ -46,8 +48,22 @@ class WeatherData(Base):
         return self._df_weatherData
 
     def model_post_init(self, __context: Any) -> None:
+        self.generate_df()
+
+    def generate_df(self) -> None:
         df = pd.DataFrame.from_dict(self.weatherData.model_dump())
-        df.index = self.weatherData.timeStamps
+        time_zone = self.tz
+        offset = pytz.FixedOffset(time_zone * 60)
+        pd_time_series = pd.to_datetime(df["timeStamps"])
+        # check if has tz info
+        entry = pd_time_series[0]
+        if entry.tzinfo is None:
+            pd_time_series = pd_time_series.apply(lambda x: x.tz_localize(offset))
+            # subtract time_tone hours
+            pd_time_series = pd_time_series.apply(lambda x: x - pd.Timedelta(hours=1))
+        self.weatherData.timeStamps = pd_time_series.to_list()
+        df.index = pd_time_series
+        df["timeStamps"] = pd_time_series
         self._df_weatherData = df
 
     def adjust_time_stamp(self) -> None:
@@ -58,13 +74,13 @@ class WeatherData(Base):
         df_weatherData: pd.DataFrame | None = self._df_weatherData
         if df_weatherData is None:
             return
+
         new_time_index = df_weatherData.index + pd.Timedelta(minutes=self.timeshiftInMinutes)
         new_start_time = new_time_index[0]
-        df_weatherData.index = new_time_index
-        self._df_weatherData = df_weatherData
 
         # update the time stamps in the weather data
         self.weatherData.timeStamps = new_time_index.to_list()
+        self.generate_df()
 
     def recalculate_dni(self) -> None:
         """
@@ -93,5 +109,5 @@ class WeatherData(Base):
         dni[dni == -0.0] = 0.0
 
         # replace the DNI column with the recalculated values
-        self.weatherData.dni = dni
-        self._df_weatherData["dni"] = dni
+        self.weatherData.dni = list(dni)
+        self.generate_df()

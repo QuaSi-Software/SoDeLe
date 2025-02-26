@@ -3,7 +3,7 @@ line-length = 240
 
 [tool.poetry]
 name = "sodele"
-version = "2.0.2"
+version = "2.0.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
