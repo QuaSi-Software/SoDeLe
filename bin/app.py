@@ -256,6 +256,7 @@ def read_in_weather_data_file(weatherDataFile):
 
         logger.info(f"The DWD .dat weather file '{weatherDataFile}' of kind '{metadata['kind'][1:]}' from the years {metadata['years']} with {df_weatherData.shape[0]} datapoints was read in successfully.")
 
+        # TODO read in .dat files
         return sodele.WeatherData(
             altitude=metadata["altitude"],
             kind=metadata['kind'] + " of the years " + metadata['years'],
@@ -541,8 +542,8 @@ def print_location_information(latitude, longitude):
     return
 
 
-# @click.command("simulatePv")
-# @click.option('--input_json', '-i', help='The path to the input json file.', required=True)
+@click.command("simulatePv")
+@click.option('--input_json', '-i', help='The path to the input json file.', required=True)
 def simulate_pv(input_json):
     filePath = os.path.abspath(input_json)
     if not os.path.exists(input_json):
@@ -607,13 +608,13 @@ def generate_pv_database(path):
     generate_pv_lib_database(path)
 
 
-# @click.group()
-# def main():
-#     pass
-#
-#
-# main.add_command(simulate_pv)
-# main.add_command(generate_pv_database)
+@click.group()
+def main():
+    pass
+
+
+main.add_command(simulate_pv)
+main.add_command(generate_pv_database)
 
 if __name__ == "__main__":
-    simulate_pv("./docs/testInput.json")
+    main()
