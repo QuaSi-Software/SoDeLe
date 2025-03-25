@@ -76,6 +76,6 @@
   "weatherData": {
     "latitude": 51.340199,
     "longitude": 12.360103,
-    "weatherDataFile": "./docs/TRY2015_Stuttgart_JahrEPW.epw"
+    "weatherDataFile": "./docs/TRY2015_487959087814_Jahr.dat"
   }
 }

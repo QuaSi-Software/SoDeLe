@@ -100,16 +100,15 @@ With an installed python environment, the python script can also be started dire
 
 **Installation of python**
 
-We recommend using a virtual environment, e.g. created with Anaconda. The required steps to work with *SoDeLe* from python are described below in short form:
+We recommend using a virtual environment. The required steps to work with *SoDeLe* from python are described below in short form:
 
-- install the latest Anaconda: [https://www.anaconda.com/download](https://www.anaconda.com/download)
-- create a new environment by opening the Anaconda promt and type `conda create --name sodele_env python=3.9`
-- activate the created environment: `conda activate sodele_env`
-- install pip: `conda install pip`
-- install git: `pip install git`
-- create local folder and activate it: `cd /path/to/local/folder`
+- install the Python >= 3.12 from [https://www.python.org/downloads/](https://www.python.org/downloads/)
+- navigate to the folder where you want to clone the repository
 - clone repository to the local folder: `git clone git@github.com:QuaSi-Software/SoDeLe.git`
-- install python requirements for SoDeLe: `pip install -r requirements-dev.txt`
+- create the virtual environment: `cd /path/to/local/sodele/repo/folder` and `python -m venv .venv`
+- activate the virtual environment: `source .venv/bin/activate` (Linux) or `.\.venv\Scripts\activate` (Windows)
+- install poetry (if not already installed): `pip install poetry`
+- install the required packages: `poetry install` or with dev packages `poetry install --with dev`
 
 **Usage of *SoDeLe* with Python**
 
@@ -118,6 +117,7 @@ With a python environment set up, *SoDeLe* can be run directly from python. Seve
 Running *SoDeLe* with the command `simulatePv` will run the PV simulation from a given input file in json format (see above for how to create an input file, an example is provided in `docs/testInput.json`) The following parameters should be used to call *SoDeLe*:
 ```
 cd  <path/to/local/sodele/repo/folder> 
+export PYTHONPATH=$PYTHONPATH:./src
 <path/to/python.exe> bin/app.py simulatePv --input_json [or simply -i] <path/to/input.json>
 ```
 

@@ -10,12 +10,22 @@ from sodele.interfaces.sodele_input import SodeleInput
 import logging
 
 logger = logging.getLogger("SoDeLe")
+# set log level to info
+logger.setLevel(logging.DEBUG)
+# add console handler
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# set format
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 
 class PvPlantResults(TypedDict):
     energyProfile: list[float]
     surfaceArea: float
     sumOfEnergyPerYear: float
+    modulesPowerRated: float
 
 
 class DataframeResults(TypedDict):
@@ -164,6 +174,7 @@ def calc_pv_power_profile(sodele_input: SodeleInput, current_pv_plant: Photovolt
         energyProfile=(pv_energy_profile / 1000).tolist(),  # in [kWh]
         surfaceArea=module_surface_area,  # in [m^2]
         sumOfEnergyPerYear=pv_energy_profile.sum() / 1_000,  # in [kWh]
+        modulesPowerRated=modules_power_rated / 1_000,  # in [kW]
     )
 
 
@@ -375,7 +386,7 @@ def simulate_pv_plants(sodele_input: SodeleInput) -> tuple[SodeleResults, list[P
         results = calc_pv_power_profile(sodele_input, currentPVPlant)
         currentPVPlant.energyProfile = results["energyProfile"]
         currentPVPlant.surfaceArea = results["surfaceArea"]
-        currentPVPlant.systemKWP = results["sumOfEnergyPerYear"]
+        currentPVPlant.systemKWP = results["modulesPowerRated"]
 
     logger.info("Finished the Calculation")
     logger.info("preparing the Output")
