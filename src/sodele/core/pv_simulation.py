@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pvlib
+import os
 from typing import TypedDict
 
 from sodele.interfaces.pv_results import PvResult, SodeleResults, PhotovoltaicResultsWrapper
@@ -394,8 +395,11 @@ def simulate_pv_plants(sodele_input: SodeleInput) -> tuple[SodeleResults, list[P
     energy_results: DataframeResults = generate_energy_profile_data_frame(sodele_input)
     summary_results: SummaryResults = generate_summary_data_frame(sodele_input)
 
-    # write the results
-    if sodele_input.keep_files or True:
+    if sodele_input.keep_files:
+        # if tmp does not exist, create it
+        if not os.path.exists("./tmp"):
+            os.makedirs("./tmp")
+
         filename = f"./tmp/{sodele_input.uuid}_pv_simulation.xlsx"
         with pd.ExcelWriter(filename, engine="xlsxwriter") as xlsxWriter:
             df_result_energy_profiles = energy_results["df_resultEnergyProfiles"]

@@ -76,7 +76,8 @@ def read_in_weather_data_file(weatherDataFile):
     if weatherDataFile.endswith(".dat"):
         with open(weatherDataFile, "rb") as f:
             lines = f.read()
-            return read_in_dat_file(lines)
+            # TODO read in .dat files
+        return read_in_dat_file(lines)
     elif weatherDataFile.endswith(".epw"):
         with open(weatherDataFile, "rb") as f:
             lines = f.read()
@@ -364,10 +365,14 @@ def simulate_pv(input_json):
     latitude = inputJsonDict.get("weatherData", {}).get("latitude", None)
     longitude = inputJsonDict.get("weatherData", {}).get("longitude", None)
     weatherDataFile = inputJsonDict.get("weatherData", {}).get("weatherDataFile", None)
-    if weatherDataFile is not None:
-        weatherData = read_in_weather_data_file(weatherDataFile)  # .dat or .epw file externally given by absolute or relative path
-    else:
-        weatherData = request_try_data(latitude, longitude)  # modified .dat file crawled from DWD and saved locally
+    weatherData = None
+    try:
+        weatherData = WeatherData.model_validate(inputJsonDict["weatherData"])
+    except Exception as e:
+        if weatherDataFile is not None:
+            weatherData = read_in_weather_data_file(weatherDataFile)  # .dat or .epw file externally given by absolute or relative path
+        else:
+            weatherData = request_try_data(latitude, longitude)  # modified .dat file crawled from DWD and saved locally
     inputJsonDict["weatherData"] = weatherData.model_dump()
     sodeleInput = sodele.SodeleInput.model_validate(inputJsonDict)
 
@@ -421,6 +426,12 @@ def generate_pv_database(path):
 def main():
     pass
 
+
+main.add_command(simulate_pv)
+main.add_command(generate_pv_database)
+
+if __name__ == "__main__":
+    main()
 
 main.add_command(simulate_pv)
 main.add_command(generate_pv_database)
