@@ -16,7 +16,7 @@ disallow_untyped_calls = true
 disallow_untyped_decorators = true
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "~3.12"
 pvlib = "0.9.5"
 numpy = "^1.24.3"
 pandas = "^2.0.1"
@@ -39,6 +39,7 @@ flake8 = "^7.1.1"
 mypy = "^1.15.0"
 pandas-stubs = "^2.2.3.241126"
 types-requests = "^2.32.0.20241016"
+pyinstaller = "^6.13.0"
 
 [build-system]
 requires = ["poetry-core"]

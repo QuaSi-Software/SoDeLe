@@ -1,8 +1,7 @@
-import sodele
+import os
 from typing import Tuple
-import pathlib
 
-SODELE_ROOT = pathlib.Path(sodele.__file__).parent
+SODELE_ROOT = f"{os.getcwd()}/src/sodele"
 RES_PREFIX = f"{SODELE_ROOT}/res/PV_Database"
 
 def get_database_paths(modules_database_type: int) -> Tuple[str, str]:
