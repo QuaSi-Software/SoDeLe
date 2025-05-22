@@ -25,7 +25,7 @@ class PhotovoltaicPlant(Base):
     lossesDCCables: float = Field(0.0, description="The losses due to the cables.")
     modulesDatabaseType: int = Field(1, description="The type of the modules database. (1 = CEC, 2 = Sandia)")
     useInverterDatabase: bool = Field(False, description="Whether to use the inverter database.")
-    inverterName: str | None = Field(None, description="The name of the inverter.")
+    inverterName: str = Field("ABB__MICRO_0_25_I_OUTD_US_208__208V_", description="The name of the inverter.")
     useStandByPowerInverter: bool = Field(False, description="Whether to use the standby power inverter.")
     inverterEta: float = Field(0.92, description="The efficiency of the inverter.")
 
