@@ -1,0 +1,2 @@
+*.exe filter=lfs diff=lfs merge=lfs -text
+precompiled_with_frontend/SoDeLe.exe filter=lfs diff=lfs merge=lfs -text

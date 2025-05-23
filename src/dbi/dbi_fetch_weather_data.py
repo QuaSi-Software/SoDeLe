@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 
 
-def fetch_weather_data(dieter_url, latitude, longitude, access_token):
+def fetch_weather_data(dieter_url: str, latitude: float, longitude: float, access_token: str) -> tuple[pd.DataFrame, float, float]:
     """
     Fetches weather data from the openweathermap API.
 
@@ -15,16 +15,10 @@ def fetch_weather_data(dieter_url, latitude, longitude, access_token):
     :return:
     """
     auth_header = f"Bearer {access_token}"
-    headers = {
-        "Authorization": auth_header
-    }
-    params = {
-        "latlng": f"{latitude},{longitude}"
-    }
+    headers = {"Authorization": auth_header}
+    params = {"latlng": f"{latitude},{longitude}"}
 
-    response = requests.get(dieter_url + "/try",
-                            headers=headers,
-                            params=params)
+    response = requests.get(dieter_url + "/try", headers=headers, params=params)
 
     body = response.json()
     try_data = body["_embedded"]["test_reference_year"][0]
