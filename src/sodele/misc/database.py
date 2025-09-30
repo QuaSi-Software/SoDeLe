@@ -1,8 +1,11 @@
 import os
 from typing import Tuple
+import dotenv
+
+dotenv.load_dotenv()
 
 SODELE_ROOT = f"{os.getcwd()}/src/sodele"
-RES_PREFIX = f"{SODELE_ROOT}/res/PV_Database"
+RES_PREFIX = os.getenv("SODELE_RES_PREFIX", f"{SODELE_ROOT}/res/PV_Database")
 
 def get_database_paths(modules_database_type: int) -> Tuple[str, str]:
     """
