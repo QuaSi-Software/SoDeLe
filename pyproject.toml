@@ -7,6 +7,10 @@ version = "2.0.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+packages = [
+    { include = "sodele", from = "src" },
+    { include = "dbi", from = "src" }
+]
 
 [tool.mypy]
 files = "src"
